@@ -1,0 +1,317 @@
+/* Cores como variáveis: o tema escuro só troca os valores, não as regras. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --text: #1c1f24;
+  --muted: #646b76;
+  --border: #dde1e6;
+  --accent: #2f6fde;
+
+  --green: #1f9d55;
+  --yellow: #c98a00;
+  --red: #d64545;
+  --note-bg: #fff6d6;
+
+  --radius: 10px;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171b;
+    --surface: #1e2127;
+    --text: #e8eaed;
+    --muted: #9aa1ab;
+    --border: #2e333b;
+    --accent: #6b9cf0;
+    --note-bg: #3a3214;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* --- Topo e indicador de estado --- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.topbar__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.status {
+  --status-color: var(--red);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--status-color);
+  background: color-mix(in srgb, var(--status-color) 14%, transparent);
+  border: 2px solid var(--status-color);
+}
+
+.status--recording {
+  --status-color: var(--green);
+}
+
+.status--paused {
+  --status-color: var(--yellow);
+}
+
+.status__dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--status-color);
+}
+
+.status--recording .status__dot {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* --- Layout --- */
+
+.layout {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+/* --- Botões --- */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn--primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.btn--warn {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: #fff;
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.btn--ghost {
+  background: transparent;
+}
+
+.btn--small {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* --- Texto parcial e mensagens --- */
+
+.interim {
+  min-height: 1.5em;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.message {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.message[data-kind="warn"] {
+  background: color-mix(in srgb, var(--yellow) 18%, transparent);
+}
+
+.message[data-kind="error"] {
+  background: color-mix(in srgb, var(--red) 16%, transparent);
+}
+
+/* --- Navegação e lista do dia --- */
+
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.day-nav__label {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 3.5rem 7.5rem 1fr auto;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.entry__time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.entry__badge {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.entry__text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.entry__actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0.5;
+}
+
+.entry:hover .entry__actions,
+.entry:focus-within .entry__actions {
+  opacity: 1;
+}
+
+.entry--note {
+  background: var(--note-bg);
+  border-radius: 6px;
+}
+
+.entry--note .entry__text {
+  font-weight: 600;
+}
+
+.entry--pause .entry__text {
+  color: var(--yellow);
+}
+
+.entry__edit {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.entry__edit input {
+  flex: 1;
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* --- Celular: a linha vira duas --- */
+
+@media (max-width: 600px) {
+  .entry {
+    grid-template-columns: 3.5rem 1fr;
+  }
+
+  .entry__badge,
+  .entry__actions {
+    grid-column: 2;
+  }
+
+  .entry__actions {
+    opacity: 1;
+  }
+}
