@@ -7,6 +7,7 @@ import { Recorder } from "./recorder.js";
 // Guardados no navegador para sobreviver a um F5 ou à aba fechada sem querer
 const STATE_KEY = "diario.recorderState";
 const PAUSE_KEY = "diario.pauseStartedAt";
+const ORDER_KEY = "diario.newestFirst";
 
 const STATUS_LABELS = {
   idle: "Parado",
@@ -180,6 +181,13 @@ async function endDay() {
 
 // --- Navegação entre dias --------------------------------------------------
 
+function renderOrderToggle() {
+  // O botão mostra a ordem ATUAL; clicar inverte
+  $("order-toggle").textContent = dayView.newestFirst
+    ? "↓ Mais recentes primeiro"
+    : "↑ Mais antigas primeiro";
+}
+
 async function loadDay(day) {
   currentDay = day;
   $("day-label").textContent = formatDayLabel(day);
@@ -210,7 +218,20 @@ async function init() {
     return;
   }
 
-  dayView = new DayView({ listEl: $("entries"), emptyEl: $("empty"), timeZone: config.timezone });
+  // Padrão: mais recentes primeiro. A escolha fica salva no navegador.
+  const newestFirst = storage.get(ORDER_KEY) !== "false";
+  dayView = new DayView({
+    listEl: $("entries"),
+    emptyEl: $("empty"),
+    timeZone: config.timezone,
+    newestFirst,
+  });
+  renderOrderToggle();
+  $("order-toggle").addEventListener("click", () => {
+    dayView.setNewestFirst(!dayView.newestFirst);
+    storage.set(ORDER_KEY, String(dayView.newestFirst));
+    renderOrderToggle();
+  });
 
   $("day-prev").addEventListener("click", () => loadDay(addDays(currentDay, -1)));
   $("day-next").addEventListener("click", () => loadDay(addDays(currentDay, 1)));

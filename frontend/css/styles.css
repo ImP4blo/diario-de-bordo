@@ -282,6 +282,12 @@ body {
   text-align: center;
 }
 
+.list-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
 .entries {
   list-style: none;
   margin: 0;

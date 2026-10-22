@@ -42,9 +42,10 @@ export function formatDayLabel(day) {
 }
 
 export class DayView {
-  constructor({ listEl, emptyEl, timeZone }) {
+  constructor({ listEl, emptyEl, timeZone, newestFirst = true }) {
     this.listEl = listEl;
     this.emptyEl = emptyEl;
+    this.newestFirst = newestFirst;
     this.timeFormat = new Intl.DateTimeFormat("pt-BR", {
       timeZone,
       hour: "2-digit",
@@ -52,15 +53,27 @@ export class DayView {
     });
   }
 
+  /** `entries` chega da API em ordem cronológica; invertemos se for o caso. */
   render(entries) {
-    this.listEl.replaceChildren(...entries.map((entry) => this.#renderEntry(entry)));
+    const ordered = this.newestFirst ? [...entries].reverse() : entries;
+    this.listEl.replaceChildren(...ordered.map((entry) => this.#renderEntry(entry)));
     this.#updateEmpty();
   }
 
+  /** Troca a ordem só invertendo os itens que já estão na tela, sem chamar a API. */
+  setNewestFirst(newestFirst) {
+    if (newestFirst === this.newestFirst) return;
+    this.newestFirst = newestFirst;
+    this.listEl.replaceChildren(...[...this.listEl.children].reverse());
+  }
+
+  /** Item novo entra no topo (mais recentes primeiro) ou no fim da lista. */
   append(entry) {
-    this.listEl.append(this.#renderEntry(entry));
+    const item = this.#renderEntry(entry);
+    if (this.newestFirst) this.listEl.prepend(item);
+    else this.listEl.append(item);
     this.#updateEmpty();
-    this.listEl.lastElementChild.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    item.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   #updateEmpty() {
