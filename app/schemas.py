@@ -79,6 +79,37 @@ class RoutineData(BaseModel):
         return self
 
 
+class DiaryBlock(BaseModel):
+    """Um bloco do diário: "das 10:05 às 10:40, refinamento com o PO".
+
+    Os nomes ficam em português porque são exatamente as chaves que pedimos à IA.
+    """
+
+    inicio: ClockTime
+    fim: ClockTime
+    atividade: str = Field(min_length=1, max_length=200)
+    descricao: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def _inicio_antes_do_fim(self) -> Self:
+        if self.inicio > self.fim:
+            raise ValueError(f"O bloco '{self.atividade}' termina antes de começar")
+        return self
+
+
+class DiaryResult(BaseModel):
+    """Formato que a IA deve devolver."""
+
+    blocos: list[DiaryBlock]
+
+
+class DiaryDay(BaseModel):
+    day: date
+    blocks: list[DiaryBlock]
+    status: str = "draft"
+    provider: str = ""
+
+
 class CurrentActivity(BaseModel):
     activity: str | None = None
     since: datetime | None = None  # quando a atividade começou

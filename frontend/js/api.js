@@ -46,6 +46,10 @@ export const api = {
   deleteEntry: (id) => request(`/api/entries/${id}`, { method: "DELETE" }),
   routine: () => request("/api/routine"),
   saveRoutine: (data) => request("/api/routine", { method: "PUT", body: data }),
+  diary: (start, end) => request(`/api/diary?start=${start}&end=${end}`),
+  generateDiary: (start, end) =>
+    request(`/api/diary/generate?start=${start}&end=${end}`, { method: "POST" }),
+  saveDiary: (day, blocks) => request(`/api/diary/${day}`, { method: "PUT", body: { blocks } }),
 };
 
 // --- Caixa de saída -------------------------------------------------------

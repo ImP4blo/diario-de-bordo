@@ -268,6 +268,13 @@ function renderExportLinks() {
   $("export-day").href = exportUrl(currentDay, currentDay);
   $("export-week").href = exportUrl(monday, friday);
   document.querySelectorAll(".export-ext").forEach((el) => (el.textContent = `(.${fmt})`));
+
+  // Diário com IA: abre a tela de revisão já gerando (ou só mostrando o que foi salvo)
+  const reviewUrl = (start, end, generate) =>
+    `review.html?start=${start}&end=${end}${generate ? "&generate=1" : ""}`;
+  $("diary-day").href = reviewUrl(currentDay, currentDay, true);
+  $("diary-week").href = reviewUrl(monday, friday, true);
+  $("diary-review").href = reviewUrl(monday, friday, false);
 }
 
 async function loadDay(day) {

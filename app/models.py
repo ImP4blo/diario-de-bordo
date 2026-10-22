@@ -42,6 +42,21 @@ class Entry(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=utcnow)
 
 
+class GeneratedDiary(SQLModel, table=True):
+    """Diário de um dia gerado pela IA (e depois revisado pela pessoa).
+
+    Os blocos ficam como JSON em texto: são lidos e salvos sempre juntos, então
+    não vale a pena uma tabela só para eles.
+    """
+
+    user_id: str = Field(primary_key=True)
+    local_date: date = Field(primary_key=True)
+    blocks_json: str
+    status: str = "draft"  # draft = saiu da IA | reviewed = revisado pela pessoa
+    provider: str = ""  # quem gerou (ex.: "groq / llama-3.3-70b-versatile")
+    updated_at: datetime = Field(default_factory=utcnow)
+
+
 class WorkSchedule(SQLModel, table=True):
     """Expediente da pessoa. Ter esta linha também indica que a rotina já foi
     carregada do arquivo de configuração (assim, apagar todos os blocos não faz

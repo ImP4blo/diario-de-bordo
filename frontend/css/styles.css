@@ -567,6 +567,97 @@ body {
   color: var(--text);
 }
 
+/* --- Diário com IA e tela de revisão --- */
+
+.ai-tools {
+  align-items: center;
+  margin: 0 0 0.75rem;
+}
+
+.ai-tools .hint {
+  margin: 0;
+}
+
+.review-days {
+  display: grid;
+  gap: 1rem;
+}
+
+.review-day__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.review-day__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.review-day__status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  color: var(--yellow);
+  background: color-mix(in srgb, var(--yellow) 15%, transparent);
+}
+
+.review-day__status[data-status="reviewed"] {
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 15%, transparent);
+}
+
+.review-blocks {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.review-block {
+  display: grid;
+  grid-template-columns: auto minmax(8rem, 1fr) 2fr auto;
+  align-items: start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.review-block--empty {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
+.review-block__times {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.review-block input,
+.review-block textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.review-block__times input {
+  width: auto;
+}
+
+.review-block textarea {
+  resize: vertical;
+}
+
 /* --- Alerta de inatividade (modal) --- */
 
 .dialog {
@@ -612,5 +703,9 @@ body {
 
   .entry__actions {
     opacity: 1;
+  }
+
+  .review-block {
+    grid-template-columns: 1fr;
   }
 }
