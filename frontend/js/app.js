@@ -108,6 +108,17 @@ function handleFinal(text, startedAt) {
 function showActivity({ activity, since }) {
   $("activity-text").textContent = activity ?? "";
   $("activity-since").textContent = activity && since ? `desde ${formatTime(since)}` : "";
+  // Caixa amarela e botão "Finalizar" só quando há atividade em andamento
+  $("activity").classList.toggle("activity--active", Boolean(activity));
+  $("activity-end").hidden = !activity;
+}
+
+async function endActivity() {
+  const activity = $("activity-text").textContent;
+  if (!activity) return;
+  // Some da tela na hora; o registro vai para o servidor (ou para a caixa de saída)
+  showActivity({ activity: null });
+  await save({ kind: "activity_end", text: `Finalizou: ${activity}`, activity });
 }
 
 async function loadActivity() {
@@ -240,6 +251,7 @@ async function init() {
   await loadActivity();
 
   $("note-form").addEventListener("submit", submitNote);
+  $("activity-end").addEventListener("click", endActivity);
   $("notes-only").hidden = config.save_mode !== "notes_only";
 
   updateOutboxNotice();

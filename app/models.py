@@ -20,6 +20,7 @@ class EntryKind(StrEnum):
     PAUSE = "pause"  # pausa intencional: ts = início, ends_at = retomada
     CONFIRM = "confirm"  # "Sim, continuo em X" no alerta de inatividade
     ACTIVITY_CHANGE = "activity_change"  # "Não, agora estou em Y" no alerta
+    ACTIVITY_END = "activity_end"  # botão "Finalizar atividade": fica sem atividade atual
 
 
 class Entry(SQLModel, table=True):

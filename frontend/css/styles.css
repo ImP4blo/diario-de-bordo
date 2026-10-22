@@ -74,8 +74,91 @@ body {
   color: var(--muted);
 }
 
-.topbar__credit a {
+/* --- Links com microinteração (hover) --- */
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.link-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  transition:
+    transform 0.18s ease,
+    color 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.link-chip svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: currentColor;
+  transition: transform 0.25s ease;
+}
+
+/* Ao passar o mouse (ou focar pelo teclado): sobe um pouco, ganha cor e sombra,
+   e o ícone dá um leve giro */
+.link-chip:hover,
+.link-chip:focus-visible {
+  transform: translateY(-2px);
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.link-chip:hover svg,
+.link-chip:focus-visible svg {
+  transform: scale(1.15) rotate(-8deg);
+}
+
+.link-chip:active {
+  transform: translateY(0);
+}
+
+.link-chip--accent {
   color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+}
+
+/* Link de texto com sublinhado que "cresce" da esquerda para a direita */
+.link-underline {
+  color: var(--accent);
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0 1px;
+  transition: background-size 0.25s ease;
+}
+
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* Quem pediu menos movimento no sistema operacional não vê animação */
+@media (prefers-reduced-motion: reduce) {
+  .link-chip,
+  .link-chip svg,
+  .link-underline {
+    transition: none;
+  }
+
+  .link-chip:hover,
+  .link-chip:focus-visible {
+    transform: none;
+  }
 }
 
 .status {
@@ -228,7 +311,19 @@ body {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
   border-radius: 8px;
+  border: 1px dashed var(--border);
+  transition: background-color 0.25s ease;
+}
+
+/* Amarelo só enquanto há uma atividade em andamento */
+.activity--active {
   background: var(--note-bg);
+  border-style: solid;
+  border-color: transparent;
+}
+
+.activity__end {
+  margin-left: auto;
 }
 
 .activity__label {
@@ -348,6 +443,11 @@ body {
   font-weight: 600;
 }
 
+.entry--activity_end .entry__text {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .entry--pause .entry__text {
   color: var(--yellow);
 }
@@ -400,10 +500,6 @@ body {
 
 .footer p {
   margin: 0;
-}
-
-.footer a {
-  color: var(--accent);
 }
 
 /* --- Celular: a linha vira duas --- */

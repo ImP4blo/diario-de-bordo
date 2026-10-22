@@ -8,6 +8,7 @@ const KIND_LABELS = {
   pause: "Pausa",
   confirm: "Confirmação",
   activity_change: "Nova atividade",
+  activity_end: "Fim da atividade",
 };
 
 /** "2026-10-26" + n dias. Usamos meio-dia UTC para nunca "pular" de dia por causa de fuso. */

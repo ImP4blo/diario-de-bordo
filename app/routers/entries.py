@@ -11,8 +11,13 @@ from app.schemas import CurrentActivity, EntryCreate, EntryRead, EntryUpdate
 from app.services.days import local_date_of, to_utc, today
 from app.services.keyword import extract_note
 
-# Entradas que mostram que a pessoa registrou o que está fazendo
-_EXPLICIT_KINDS = (EntryKind.NOTE, EntryKind.CONFIRM, EntryKind.ACTIVITY_CHANGE)
+# Entradas que mostram que a pessoa registrou o que está fazendo (ou que parou)
+_EXPLICIT_KINDS = (
+    EntryKind.NOTE,
+    EntryKind.CONFIRM,
+    EntryKind.ACTIVITY_CHANGE,
+    EntryKind.ACTIVITY_END,
+)
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
@@ -109,6 +114,10 @@ def current_activity(
         return CurrentActivity()
 
     latest = explicit[0]
+    if latest.kind == EntryKind.ACTIVITY_END:
+        # Atividade finalizada: nenhuma em andamento, mas o registro conta como explícito
+        return CurrentActivity(last_explicit_at=latest.ts)
+
     # "desde": quando a atividade foi DEFINIDA (confirmações não reiniciam)
     since = next((e.ts for e in explicit if e.kind != EntryKind.CONFIRM), latest.ts)
     return CurrentActivity(activity=latest.activity, since=since, last_explicit_at=latest.ts)
