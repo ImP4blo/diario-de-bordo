@@ -18,6 +18,7 @@ class PublicConfig(BaseModel):
     today: str
     save_mode: str
     inactivity_minutes: int
+    phrase_gap_seconds: float
 
 
 @router.get("", response_model=PublicConfig)
@@ -29,4 +30,5 @@ def get_public_config() -> PublicConfig:
         today=today().isoformat(),
         save_mode=settings.save_mode,
         inactivity_minutes=settings.inactivity_minutes,
+        phrase_gap_seconds=settings.phrase_gap_seconds,
     )

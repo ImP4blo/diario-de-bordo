@@ -8,6 +8,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from sqlalchemy.engine import make_url
+from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.config import get_settings
@@ -17,7 +18,13 @@ _is_sqlite = _url.get_backend_name() == "sqlite"
 
 # O SQLite, por padrão, só aceita a thread que abriu a conexão. O FastAPI atende
 # requisições em threads diferentes, então desligamos essa trava.
-engine = create_engine(_url, connect_args={"check_same_thread": False} if _is_sqlite else {})
+engine = create_engine(
+    _url,
+    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    # Banco em memória (usado nos testes) precisa de UMA conexão compartilhada,
+    # senão cada thread enxergaria um banco vazio diferente
+    poolclass=StaticPool if _is_sqlite and not _url.database else None,
+)
 
 
 def init_db() -> None:

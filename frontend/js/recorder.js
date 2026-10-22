@@ -12,23 +12,30 @@ const FATAL_ERRORS = new Set(["not-allowed", "service-not-allowed", "language-no
 // Erros que fazem parte do funcionamento normal (silêncio, parada manual).
 const IGNORED_ERRORS = new Set(["no-speech", "aborted"]);
 
+// O Chrome finaliza uma frase a cada pausa curta (até uma respirada). Para não picar
+// a fala em vários itens, juntamos os trechos num buffer e só entregamos depois de
+// alguns segundos de silêncio.
+const DEFAULT_PHRASE_GAP_MS = 5000;
+
 // Uma sessão que durou mais que isso "deu certo": zera o contador de falhas.
 const HEALTHY_SESSION_MS = 5000;
 const MAX_RETRY_DELAY_MS = 30000;
 
 export class Recorder {
   /**
-   * @param {object} callbacks
-   * @param {(text: string, startedAt: Date) => void} callbacks.onFinal  trecho reconhecido
-   * @param {(text: string) => void} callbacks.onInterim  texto parcial, em tempo real
-   * @param {(state: string) => void} callbacks.onStateChange  idle | recording | paused | error
-   * @param {(code: string, fatal: boolean) => void} callbacks.onError
+   * @param {object} options
+   * @param {(text: string, startedAt: Date) => void} options.onFinal  fala completa
+   * @param {(text: string) => void} options.onInterim  texto ainda não salvo, em tempo real
+   * @param {(state: string) => void} options.onStateChange  idle | recording | paused | error
+   * @param {(code: string, fatal: boolean) => void} options.onError
+   * @param {number} [options.phraseGapMs]  silêncio que encerra uma fala
    */
-  constructor({ onFinal, onInterim, onStateChange, onError }) {
+  constructor({ onFinal, onInterim, onStateChange, onError, phraseGapMs }) {
     this.onFinal = onFinal;
     this.onInterim = onInterim;
     this.onStateChange = onStateChange;
     this.onError = onError;
+    this.phraseGapMs = phraseGapMs ?? DEFAULT_PHRASE_GAP_MS;
 
     this.state = "idle";
     this.rec = null;
@@ -36,6 +43,19 @@ export class Recorder {
     this.retryTimer = null;
     this.sessionStartedAt = 0;
     this.phraseStartedAt = null;
+
+    // Trechos finais aguardando o silêncio para virar uma fala só
+    this.buffer = [];
+    this.bufferStartedAt = null;
+    this.gapTimer = null;
+  }
+
+  /** Entrega já o que estiver no buffer (ao pausar, encerrar ou fechar a aba). */
+  flush() {
+    clearTimeout(this.gapTimer);
+    if (this.buffer.length > 0) this.onFinal(this.buffer.join(" "), this.bufferStartedAt);
+    this.buffer = [];
+    this.bufferStartedAt = null;
   }
 
   static isSupported() {
@@ -93,13 +113,26 @@ export class Recorder {
 
       if (result.isFinal) {
         const text = result[0].transcript.trim();
-        if (text) this.onFinal(text, this.phraseStartedAt);
+        if (text) {
+          this.bufferStartedAt ??= this.phraseStartedAt;
+          this.buffer.push(text);
+        }
         this.phraseStartedAt = null;
       } else {
         interim += result[0].transcript;
       }
     }
-    this.onInterim(interim.trim());
+    this.#showPending(interim);
+
+    // Qualquer som reconhecido reinicia a contagem do silêncio
+    clearTimeout(this.gapTimer);
+    if (this.buffer.length > 0) {
+      this.gapTimer = setTimeout(() => this.flush(), this.phraseGapMs);
+    }
+  }
+
+  #showPending(interim = "") {
+    this.onInterim([...this.buffer, interim.trim()].join(" ").trim());
   }
 
   #handleError(code) {
@@ -113,7 +146,8 @@ export class Recorder {
   #handleEnd() {
     this.rec = null;
     this.phraseStartedAt = null;
-    this.onInterim("");
+    // O buffer sobrevive ao religamento: a fala continua na próxima sessão
+    this.#showPending();
     if (this.state !== "recording") return;
 
     if (Date.now() - this.sessionStartedAt > HEALTHY_SESSION_MS) this.retries = 0;
@@ -132,7 +166,9 @@ export class Recorder {
 
   #stopListening() {
     clearTimeout(this.retryTimer);
-    // stop() (e não abort()) ainda entrega a última frase que estava sendo reconhecida
+    this.flush();
+    // stop() (e não abort()) ainda entrega a frase em andamento; ela cai no buffer
+    // e o timer de silêncio a salva logo em seguida
     this.rec?.stop();
     this.onInterim("");
   }

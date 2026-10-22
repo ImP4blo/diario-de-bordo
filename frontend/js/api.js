@@ -16,6 +16,8 @@ class ApiError extends Error {
 async function request(path, { method = "GET", body } = {}) {
   const response = await fetch(path, {
     method,
+    // keepalive: a requisição termina mesmo se a aba for fechada no meio dela
+    keepalive: method !== "GET",
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });

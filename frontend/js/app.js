@@ -178,6 +178,7 @@ async function init() {
   }
 
   recorder = new Recorder({
+    phraseGapMs: config.phrase_gap_seconds * 1000,
     onFinal: handleFinal,
     onInterim: (text) => ($("interim").textContent = text),
     onStateChange: renderState,
@@ -189,6 +190,9 @@ async function init() {
   $("btn-pause").addEventListener("click", pause);
   $("btn-resume").addEventListener("click", resume);
   $("btn-stop").addEventListener("click", endDay);
+
+  // Aba fechando: salva o que ainda estava esperando o silêncio
+  window.addEventListener("pagehide", () => recorder.flush());
 
   // Recupera o estado de antes do F5: se estava gravando, volta a gravar
   const previous = storage.get(STATE_KEY);
