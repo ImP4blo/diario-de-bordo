@@ -299,6 +299,23 @@ body {
   margin: 1.5rem 0;
 }
 
+/* --- Rodapé --- */
+
+.footer {
+  padding: 0 1rem 2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer a {
+  color: var(--accent);
+}
+
 /* --- Celular: a linha vira duas --- */
 
 @media (max-width: 600px) {

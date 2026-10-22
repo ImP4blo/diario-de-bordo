@@ -39,8 +39,10 @@ Chrome's Web Speech API sends audio to Google servers for recognition, and the A
 
 ## Roadmap
 
-- **Stage 2:** cloud backend (Render) + Supabase (Postgres + Auth) + installable PWA with push-to-talk on mobile
-- **Stage 3 (optional):** Play Store / App Store
+- **Stage 2:** cloud backend (Render) + Supabase (Postgres + Auth) + installable PWA on mobile, with:
+  - tap-to-talk quick notes (stops automatically after a few seconds of silence)
+  - "desk mode": continuous recording with the screen kept on via the Screen Wake Lock API
+- **Stage 3 (optional):** Play Store / App Store, including true background recording on Android (foreground service)
 - Local speech recognition with Whisper
 
 ---
@@ -48,6 +50,10 @@ Chrome's Web Speech API sends audio to Google servers for recognition, and the A
 ## 🇧🇷 Em português
 
 App que transcreve sua voz durante o expediente e usa IA para gerar o **diário de bordo** semanal em Word. Projeto pessoal de estudo de Python e AI Engineering. Instruções detalhadas em português chegam na versão final deste README.
+
+## Author
+
+Built by **Pablo Mateus Melo** · [LinkedIn](https://www.linkedin.com/in/pablo-mateus-melo/) · [GitHub](https://github.com/ImP4blo)
 
 ## License
 
