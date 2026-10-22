@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     # Gravação
     save_mode: Literal["all", "notes_only"] = "all"
-    inactivity_minutes: int = 15
+    inactivity_minutes: int = Field(default=15, ge=1, le=240)
     # Segundos de silêncio que encerram uma fala (junta os trechos picados do Chrome)
     phrase_gap_seconds: float = Field(default=5, ge=1, le=60)
 

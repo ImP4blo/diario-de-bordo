@@ -88,6 +88,22 @@ def test_nova_anotacao_depois_de_finalizar_volta_a_ter_atividade(client):
     assert atividade(client)["activity"] == "Almoço"
 
 
+def test_resposta_nao_do_alerta_troca_a_atividade(client):
+    falar(client, "Diário, refinamento", ts="2026-10-26T10:00:00-03:00")
+    troca = falar(
+        client,
+        "Diário, call com o time de QA",
+        ts="2026-10-26T10:20:00-03:00",
+        kind="activity_change",
+    ).json()
+
+    assert troca["kind"] == "activity_change"
+    assert troca["text"] == "Call com o time de QA"
+    resultado = atividade(client)
+    assert resultado["activity"] == "Call com o time de QA"
+    assert resultado["since"] == "2026-10-26T13:20:00Z"
+
+
 def test_modo_so_anotacoes_descarta_falas_comuns(client):
     app.dependency_overrides[get_settings] = lambda: Settings(save_mode="notes_only")
 
