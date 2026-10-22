@@ -1,0 +1,23 @@
+# Segredos e configuração local
+.env
+config/routine.toml
+
+# Dados pessoais: banco, transcrições e documentos gerados
+data/
+*.db
+*.sqlite3
+exports/
+*.docx
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Editor / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

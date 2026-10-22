@@ -1,0 +1,3 @@
+# Guarda todos os arquivos de texto com quebra de linha LF (padrão Linux/Mac),
+# evitando diffs "fantasmas" quando alguém edita no Windows.
+* text=auto eol=lf

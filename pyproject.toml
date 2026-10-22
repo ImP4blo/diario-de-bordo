@@ -1,0 +1,33 @@
+[project]
+name = "diario-de-bordo"
+version = "0.1.0"
+description = "Voice-powered work log: transcribes your day and turns it into a structured Word diary with AI."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.161.0",
+    "pydantic-settings>=2.16.1",
+    "python-docx>=1.2.0",
+    "sqlmodel>=0.0.48",
+    "tzdata>=2026.5",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "pytest>=9.1.1",
+    "ruff>=0.17.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/F: erros básicos | I: ordem dos imports | UP: sintaxe moderna | B: bugs comuns
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
