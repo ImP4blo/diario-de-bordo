@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ajustes · Diário de Bordo</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__brand">
+        <h1 class="topbar__title">Ajustes</h1>
+        <p class="topbar__credit">Rotina fixa e expediente</p>
+      </div>
+      <a class="link-chip" href="/">← Voltar</a>
+    </header>
+
+    <main class="layout">
+      <form id="routine-form" class="panel" novalidate>
+        <h2 class="settings__title">Expediente</h2>
+        <p class="hint">Fora desse horário (e nos fins de semana) o alerta de inatividade não aparece.</p>
+        <div class="settings__row">
+          <label>Início <input id="work-start" type="time" required /></label>
+          <label>Fim <input id="work-end" type="time" required /></label>
+        </div>
+
+        <h2 class="settings__title">Rotina fixa</h2>
+        <p class="hint">
+          Blocos que se repetem todo dia útil (daily, intervalo...). Eles entram automaticamente no
+          diário e, durante eles, o alerta de inatividade fica quieto.
+        </p>
+        <ol id="blocks" class="blocks"></ol>
+        <p id="blocks-empty" class="empty" hidden>Nenhum bloco fixo.</p>
+        <button id="add-block" class="btn btn--ghost" type="button">+ Adicionar bloco</button>
+
+        <div class="settings__footer">
+          <button class="btn btn--primary" type="submit">Salvar</button>
+          <p id="settings-message" class="message" hidden></p>
+        </div>
+      </form>
+    </main>
+
+    <template id="block-template">
+      <li class="block">
+        <input class="block__start" type="time" aria-label="Início do bloco" required />
+        <span aria-hidden="true">às</span>
+        <input class="block__end" type="time" aria-label="Fim do bloco" required />
+        <input class="block__activity" placeholder="Atividade (ex.: Daily)" aria-label="Atividade" required />
+        <button class="btn btn--small btn--ghost block__remove" type="button" aria-label="Remover bloco">
+          Remover
+        </button>
+      </li>
+    </template>
+
+    <script type="module" src="js/settings.js"></script>
+  </body>
+</html>

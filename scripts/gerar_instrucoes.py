@@ -135,12 +135,34 @@ SECTIONS = [
                 [
                     "**Sim:** registra que você continua na mesma atividade.",
                     '**Não:** pede a nova atividade (digite ou fale "Diário, ...").',
-                    "Pausado ou parado, o alerta não aparece.",
+                    "Pausado, parado, fora do expediente ou durante um bloco da rotina fixa "
+                    "(ex.: daily), o alerta não aparece.",
                     "Clique em **Ativar notificações** para receber o alerta mesmo com o "
                     "Chrome minimizado, com os botões Sim e Não na própria notificação.",
                 ],
             ),
             ("tip", "Para mudar o tempo, use INACTIVITY_MINUTES no arquivo .env (1 a 240)."),
+        ],
+    ),
+    (
+        "Rotina fixa e expediente",
+        [
+            (
+                "p",
+                "Em **Ajustes** (no topo da página) você define o seu expediente e os blocos "
+                "que se repetem todo dia útil, como daily e intervalo.",
+            ),
+            (
+                "ul",
+                [
+                    "Os blocos entram automaticamente na transcrição exportada, marcados "
+                    "como [Rotina].",
+                    "Durante um bloco, e fora do expediente, o alerta de inatividade fica "
+                    "pausado. A página mostra o aviso logo abaixo dos botões.",
+                    "Clique em **+ Adicionar bloco**, preencha início, fim e atividade e "
+                    "clique em **Salvar**.",
+                ],
+            ),
         ],
     ),
     (
@@ -163,9 +185,11 @@ SECTIONS = [
             (
                 "ul",
                 [
-                    "**Dia (.md)**, **Semana (.md)** ou **Semana (.txt)**, no fim da lista.",
-                    "O arquivo .md já traz um pedido pronto no topo: cole o arquivo inteiro "
-                    "numa conversa com uma IA (como o Claude) para montar o diário em tabela.",
+                    "Acima da lista, escolha o formato no menu (**Texto .txt** ou **Word .docx**) "
+                    "e "
+                    "clique em **Dia** ou **Semana**.",
+                    "O arquivo já traz um pedido pronto no topo: cole o texto inteiro numa "
+                    "conversa com uma IA (como o Claude) para montar o diário em tabela.",
                 ],
             ),
         ],

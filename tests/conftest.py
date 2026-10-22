@@ -9,6 +9,8 @@ import os
 # Precisa vir ANTES de importar o app: garante que nada nos testes aponte para
 # o arquivo real, nem o init_db() que roda quando o app sobe.
 os.environ["DATABASE_URL"] = "sqlite://"
+# Nunca ler a rotina pessoal (config/routine.toml): os testes usam a de exemplo
+os.environ["ROUTINE_FILE"] = "rotina-inexistente-nos-testes.toml"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

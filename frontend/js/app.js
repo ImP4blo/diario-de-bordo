@@ -4,11 +4,13 @@ import { InactivityWatcher, requestNotificationPermission, shortText } from "./a
 import { api, flushOutbox, outboxSize, saveEntry } from "./api.js";
 import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
 import { Recorder } from "./recorder.js";
+import { nowIn, routineStatus } from "./routine.js";
 
 // Guardados no navegador para sobreviver a um F5 ou à aba fechada sem querer
 const STATE_KEY = "diario.recorderState";
 const PAUSE_KEY = "diario.pauseStartedAt";
 const ORDER_KEY = "diario.newestFirst";
+const EXPORT_KEY = "diario.exportFormat";
 
 const STATUS_LABELS = {
   idle: "Parado",
@@ -54,6 +56,7 @@ let currentDay;
 let recorder;
 let watcher;
 let currentActivity = null; // texto completo; a tela mostra a versão curta
+let routine = null; // expediente + blocos fixos (carregado da API)
 
 // --- Mensagens e estado visual -------------------------------------------
 
@@ -169,6 +172,37 @@ async function retryOutbox() {
   if (sent > 0) loadDay(currentDay);
 }
 
+// --- Rotina fixa ---------------------------------------------------------
+
+function currentRoutineStatus() {
+  return routine ? routineStatus(routine, nowIn(config.timezone)) : { kind: "work" };
+}
+
+let wasWatching = null;
+
+/** Só alerta gravando, dentro do expediente e fora dos blocos da rotina fixa. */
+function shouldWatchInactivity() {
+  const watching = recorder.state === "recording" && currentRoutineStatus().kind === "work";
+  // Acabou a daily (ou o intervalo, ou começou o expediente): o relógio recomeça.
+  // Sem isso, o alerta pularia no segundo em que a daily termina.
+  if (watching && wasWatching === false) watcher.reset();
+  wasWatching = watching;
+  return watching;
+}
+
+/** Mostra quando a rotina está "segurando" o alerta (bloco fixo ou fora do expediente). */
+function renderRoutineNow() {
+  const status = currentRoutineStatus();
+  const el = $("routine-now");
+  el.hidden = status.kind === "work";
+  if (status.kind === "block") {
+    const { activity, end } = status.block;
+    el.textContent = `🗓 Agora: ${activity} (rotina, até ${end}). Alerta de inatividade pausado.`;
+  } else if (status.kind === "off") {
+    el.textContent = `🌙 Fora do expediente (${routine.work_start}–${routine.work_end}). Alerta de inatividade pausado.`;
+  }
+}
+
 // --- Pausa ---------------------------------------------------------------
 // A pausa vira UMA entrada com início e fim, gravada só ao retomar. Até lá,
 // o início fica guardado no navegador.
@@ -225,18 +259,23 @@ function renderOrderToggle() {
     : "↑ Mais antigas primeiro";
 }
 
+/** Os links de exportação seguem o dia (e a semana) na tela e o formato escolhido. */
+function renderExportLinks() {
+  const fmt = $("export-format").value;
+  const [monday, friday] = weekBounds(currentDay);
+  const exportUrl = (start, end) => `/api/export/transcript?start=${start}&end=${end}&fmt=${fmt}`;
+
+  $("export-day").href = exportUrl(currentDay, currentDay);
+  $("export-week").href = exportUrl(monday, friday);
+  document.querySelectorAll(".export-ext").forEach((el) => (el.textContent = `(.${fmt})`));
+}
+
 async function loadDay(day) {
   currentDay = day;
   $("day-label").textContent = formatDayLabel(day);
   $("day-next").disabled = day >= todayIn(config.timezone);
 
-  // Os links de exportação acompanham o dia (e a semana) que está na tela
-  const [monday, friday] = weekBounds(day);
-  const exportUrl = (start, end, fmt) =>
-    `/api/export/transcript?start=${start}&end=${end}&fmt=${fmt}`;
-  $("export-day").href = exportUrl(day, day, "md");
-  $("export-week").href = exportUrl(monday, friday, "md");
-  $("export-week-txt").href = exportUrl(monday, friday, "txt");
+  renderExportLinks();
 
   try {
     dayView.render(await api.listEntries(day));
@@ -270,11 +309,27 @@ async function init() {
     renderOrderToggle();
   });
 
+  // Formato de exportação: lembra a última escolha
+  const savedFormat = storage.get(EXPORT_KEY);
+  if (savedFormat === "txt" || savedFormat === "docx") $("export-format").value = savedFormat;
+  $("export-format").addEventListener("change", () => {
+    storage.set(EXPORT_KEY, $("export-format").value);
+    renderExportLinks();
+  });
+
   $("day-prev").addEventListener("click", () => loadDay(addDays(currentDay, -1)));
   $("day-next").addEventListener("click", () => loadDay(addDays(currentDay, 1)));
   $("day-today").addEventListener("click", () => loadDay(todayIn(config.timezone)));
   await loadDay(todayIn(config.timezone));
   await loadActivity();
+
+  try {
+    routine = await api.routine();
+  } catch {
+    // sem rotina: o alerta funciona o dia todo
+  }
+  renderRoutineNow();
+  setInterval(renderRoutineNow, 30_000);
 
   $("note-form").addEventListener("submit", submitNote);
   $("activity-end").addEventListener("click", endActivity);
@@ -312,8 +367,7 @@ async function init() {
   renderNotifyButton();
   watcher = new InactivityWatcher({
     minutes: config.inactivity_minutes,
-    // Só alerta gravando (pausado ou parado, não). A rotina fixa entra na etapa 6.
-    shouldWatch: () => recorder.state === "recording",
+    shouldWatch: shouldWatchInactivity,
     getActivity: () => currentActivity,
     onConfirm: (activity) =>
       save({ kind: "confirm", text: `Continua em: ${activity}`, activity }),

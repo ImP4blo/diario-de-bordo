@@ -7,9 +7,21 @@
 const OUTBOX_KEY = "diario.outbox";
 
 class ApiError extends Error {
-  constructor(status, detail) {
-    super(`HTTP ${status}: ${detail}`);
+  constructor(status, body) {
+    super(`HTTP ${status}: ${body}`);
     this.status = status;
+    this.body = body;
+  }
+
+  /** Mensagens de validação do FastAPI ("detail"), prontas para mostrar na tela. */
+  get messages() {
+    try {
+      const { detail } = JSON.parse(this.body);
+      if (typeof detail === "string") return [detail];
+      return detail.map((error) => error.msg.replace(/^Value error, /, ""));
+    } catch {
+      return [this.message];
+    }
   }
 }
 
@@ -32,6 +44,8 @@ export const api = {
   createEntry: (data) => request("/api/entries", { method: "POST", body: data }),
   updateEntry: (id, data) => request(`/api/entries/${id}`, { method: "PATCH", body: data }),
   deleteEntry: (id) => request(`/api/entries/${id}`, { method: "DELETE" }),
+  routine: () => request("/api/routine"),
+  saveRoutine: (data) => request("/api/routine", { method: "PUT", body: data }),
 };
 
 // --- Caixa de saída -------------------------------------------------------

@@ -1,3 +1,8 @@
+from io import BytesIO
+
+from docx import Document
+
+
 def registrar(client, ts, text="", **extra):
     client.post("/api/entries", json={"ts": ts, "text": text, **extra})
 
@@ -16,7 +21,7 @@ def test_exporta_semana_agrupada_por_dia(client):
     )
     registrar(client, "2026-10-27T09:00:00-03:00", "bom dia")
 
-    texto = exportar(client, "start=2026-10-26&end=2026-10-30").text
+    texto = exportar(client, "start=2026-10-26&end=2026-10-30&fmt=md").text
 
     assert "Período: 26/10/2026 a 30/10/2026" in texto
     assert "## Segunda-feira, 26/10/2026" in texto
@@ -30,17 +35,37 @@ def test_exporta_semana_agrupada_por_dia(client):
 def test_arquivo_vem_como_download_com_nome_do_periodo(client):
     response = exportar(client, "start=2026-10-26&end=2026-10-30")
     disposition = response.headers["content-disposition"]
-    assert 'filename="transcricao_2026-10-26_a_2026-10-30.md"' in disposition
+    assert 'filename="transcricao_2026-10-26_a_2026-10-30.txt"' in disposition
 
 
-def test_exporta_um_dia_em_txt_sem_markdown(client):
+def test_exporta_um_dia_em_txt_sem_markdown_e_com_o_pedido_para_a_ia(client):
     registrar(client, "2026-10-26T10:00:00-03:00", "olá")
     response = exportar(client, "start=2026-10-26&fmt=txt")
 
     assert "transcricao_2026-10-26.txt" in response.headers["content-disposition"]
     assert "== Segunda-feira, 26/10/2026 ==" in response.text
     assert "10:00 [Fala] olá" in response.text
-    assert "#" not in response.text
+    assert "Monte meu diário de bordo" in response.text
+    assert "#" not in response.text and "**" not in response.text
+
+
+def test_exporta_em_word_com_uma_tabela_por_dia(client):
+    registrar(client, "2026-10-26T10:00:00-03:00", "Diário, refinamento com o PO")
+    registrar(client, "2026-10-27T09:00:00-03:00", "bom dia")
+    response = exportar(client, "start=2026-10-26&end=2026-10-30&fmt=docx")
+
+    assert "transcricao_2026-10-26_a_2026-10-30.docx" in response.headers["content-disposition"]
+    assert "wordprocessingml" in response.headers["content-type"]
+
+    # Abre o .docx devolvido e confere o conteúdo de verdade
+    doc = Document(BytesIO(response.content))
+    titulos = [p.text for p in doc.paragraphs if p.style.name.startswith("Heading")]
+    assert titulos == ["Segunda-feira, 26/10/2026", "Terça-feira, 27/10/2026"]
+
+    segunda = doc.tables[0]
+    assert [c.text for c in segunda.rows[0].cells] == ["Horário", "Tipo", "Texto"]
+    linhas = [[c.text for c in row.cells] for row in segunda.rows[1:]]
+    assert ["10:00", "ANOTAÇÃO", "Refinamento com o PO"] in linhas
 
 
 def test_periodo_vazio_avisa(client):
