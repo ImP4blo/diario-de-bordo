@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.db import get_session
 
 
@@ -22,5 +22,6 @@ def get_current_user_id() -> str:
     return get_settings().local_user_id
 
 
+SettingsDep = Annotated[Settings, Depends(get_settings)]
 SessionDep = Annotated[Session, Depends(get_session)]
 UserIdDep = Annotated[str, Depends(get_current_user_id)]

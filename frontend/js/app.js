@@ -1,12 +1,13 @@
 // Ponto de entrada da página: liga o gravador, a API e a tela do dia.
 
 import { api, flushOutbox, outboxSize, saveEntry } from "./api.js";
-import { addDays, DayView, formatDayLabel, todayIn } from "./day.js";
+import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
 import { Recorder } from "./recorder.js";
 
 // Guardados no navegador para sobreviver a um F5 ou à aba fechada sem querer
 const STATE_KEY = "diario.recorderState";
 const PAUSE_KEY = "diario.pauseStartedAt";
+const ORDER_KEY = "diario.newestFirst";
 
 const STATUS_LABELS = {
   idle: "Parado",
@@ -57,15 +58,22 @@ function showMessage(text, kind = "info") {
   el.hidden = !text;
 }
 
+/** "10:05" no fuso configurado */
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: config.timezone,
+  });
+}
+
 function renderState(state) {
   const status = $("status");
   status.className = `status status--${state}`;
 
   const pausedAt = storage.get(PAUSE_KEY);
   $("status-label").textContent =
-    state === "paused" && pausedAt
-      ? `Pausado desde ${new Date(pausedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: config.timezone })}`
-      : STATUS_LABELS[state];
+    state === "paused" && pausedAt ? `Pausado desde ${formatTime(pausedAt)}` : STATUS_LABELS[state];
 
   // Cada estado mostra só os botões que fazem sentido nele
   $("btn-start").hidden = !["idle", "error"].includes(state);
@@ -82,10 +90,45 @@ function renderState(state) {
 
 // --- Salvamento ----------------------------------------------------------
 
-async function handleFinal(text, startedAt) {
-  const entry = await saveEntry({ text, kind: "speech", ts: startedAt.toISOString() });
+async function save(data) {
+  const entry = await saveEntry(data);
   if (entry && entry.local_date === currentDay) dayView.append(entry);
+  if (entry?.kind === "note") showActivity({ activity: entry.activity, since: entry.ts });
   updateOutboxNotice();
+  return entry;
+}
+
+function handleFinal(text, startedAt) {
+  // O servidor decide se é fala comum ou anotação ("Diário, ...")
+  return save({ text, kind: "speech", ts: startedAt.toISOString() });
+}
+
+// --- Atividade atual -----------------------------------------------------
+
+function showActivity({ activity, since }) {
+  $("activity-text").textContent = activity ?? "";
+  $("activity-since").textContent = activity && since ? `desde ${formatTime(since)}` : "";
+}
+
+async function loadActivity() {
+  try {
+    showActivity(await api.currentActivity(todayIn(config.timezone)));
+  } catch {
+    // sem atividade carregada a tela continua funcionando
+  }
+}
+
+async function submitNote(event) {
+  event.preventDefault();
+  const input = $("note-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = "";
+  const now = new Date().toISOString();
+  const entry = await save({ text, kind: "note", ts: now });
+  // Servidor fora: a nota foi para a caixa de saída, mas já vale como atividade atual
+  if (!entry) showActivity({ activity: text, since: now });
 }
 
 function updateOutboxNotice() {
@@ -138,10 +181,26 @@ async function endDay() {
 
 // --- Navegação entre dias --------------------------------------------------
 
+function renderOrderToggle() {
+  // O botão mostra a ordem ATUAL; clicar inverte
+  $("order-toggle").textContent = dayView.newestFirst
+    ? "↓ Mais recentes primeiro"
+    : "↑ Mais antigas primeiro";
+}
+
 async function loadDay(day) {
   currentDay = day;
   $("day-label").textContent = formatDayLabel(day);
   $("day-next").disabled = day >= todayIn(config.timezone);
+
+  // Os links de exportação acompanham o dia (e a semana) que está na tela
+  const [monday, friday] = weekBounds(day);
+  const exportUrl = (start, end, fmt) =>
+    `/api/export/transcript?start=${start}&end=${end}&fmt=${fmt}`;
+  $("export-day").href = exportUrl(day, day, "md");
+  $("export-week").href = exportUrl(monday, friday, "md");
+  $("export-week-txt").href = exportUrl(monday, friday, "txt");
+
   try {
     dayView.render(await api.listEntries(day));
   } catch {
@@ -159,12 +218,29 @@ async function init() {
     return;
   }
 
-  dayView = new DayView({ listEl: $("entries"), emptyEl: $("empty"), timeZone: config.timezone });
+  // Padrão: mais recentes primeiro. A escolha fica salva no navegador.
+  const newestFirst = storage.get(ORDER_KEY) !== "false";
+  dayView = new DayView({
+    listEl: $("entries"),
+    emptyEl: $("empty"),
+    timeZone: config.timezone,
+    newestFirst,
+  });
+  renderOrderToggle();
+  $("order-toggle").addEventListener("click", () => {
+    dayView.setNewestFirst(!dayView.newestFirst);
+    storage.set(ORDER_KEY, String(dayView.newestFirst));
+    renderOrderToggle();
+  });
 
   $("day-prev").addEventListener("click", () => loadDay(addDays(currentDay, -1)));
   $("day-next").addEventListener("click", () => loadDay(addDays(currentDay, 1)));
   $("day-today").addEventListener("click", () => loadDay(todayIn(config.timezone)));
   await loadDay(todayIn(config.timezone));
+  await loadActivity();
+
+  $("note-form").addEventListener("submit", submitNote);
+  $("notes-only").hidden = config.save_mode !== "notes_only";
 
   updateOutboxNotice();
   setInterval(retryOutbox, 15000);

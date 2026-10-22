@@ -17,6 +17,12 @@ const IGNORED_ERRORS = new Set(["no-speech", "aborted"]);
 // alguns segundos de silêncio.
 const DEFAULT_PHRASE_GAP_MS = 5000;
 
+// Mesma regra de app/services/keyword.py: "Diário" (com ou sem acento) no começo.
+// O \b do JavaScript não entende acentos, então usamos "não seguido de letra/número".
+const NOTE_KEYWORD = /^\s*di[aá]rio(?![\p{L}\p{N}])/iu;
+
+export const startsWithKeyword = (text) => NOTE_KEYWORD.test(text);
+
 // Uma sessão que durou mais que isso "deu certo": zera o contador de falhas.
 const HEALTHY_SESSION_MS = 5000;
 const MAX_RETRY_DELAY_MS = 30000;
@@ -114,6 +120,9 @@ export class Recorder {
       if (result.isFinal) {
         const text = result[0].transcript.trim();
         if (text) {
+          // "Diário, ..." sempre abre um item novo; senão, juntado ao que veio
+          // antes, a palavra-chave ficaria no meio e não seria reconhecida
+          if (startsWithKeyword(text)) this.flush();
           this.bufferStartedAt ??= this.phraseStartedAt;
           this.buffer.push(text);
         }

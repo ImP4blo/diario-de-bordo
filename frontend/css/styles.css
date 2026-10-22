@@ -68,6 +68,16 @@ body {
   font-size: 1.25rem;
 }
 
+.topbar__credit {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.topbar__credit a {
+  color: var(--accent);
+}
+
 .status {
   --status-color: var(--red);
   display: inline-flex;
@@ -208,6 +218,64 @@ body {
   background: color-mix(in srgb, var(--red) 16%, transparent);
 }
 
+/* --- Atividade atual e anotação digitada --- */
+
+.activity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--note-bg);
+}
+
+.activity__label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.activity__text {
+  font-size: 1.05rem;
+}
+
+.activity__text:empty::before {
+  content: "Nenhuma ainda";
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.activity__since {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.note-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.note-form__input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* --- Navegação e lista do dia --- */
 
 .day-nav {
@@ -222,6 +290,12 @@ body {
   margin: 0;
   font-size: 1.1rem;
   text-align: center;
+}
+
+.list-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
 }
 
 .entries {
@@ -291,6 +365,22 @@ body {
   border-radius: 6px;
   background: var(--bg);
   color: var(--text);
+}
+
+.export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.export .hint {
+  margin: 0;
+}
+
+.export .btn {
+  text-decoration: none;
 }
 
 .empty {

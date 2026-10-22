@@ -44,3 +44,14 @@ class EntryRead(BaseModel):
     @classmethod
     def _garante_utc(cls, value: datetime | None) -> datetime | None:
         return as_utc(value) if value else value
+
+
+class CurrentActivity(BaseModel):
+    activity: str | None = None
+    since: datetime | None = None  # quando a atividade começou
+    last_explicit_at: datetime | None = None  # último registro explícito (nota/confirmação)
+
+    @field_validator("since", "last_explicit_at")
+    @classmethod
+    def _garante_utc(cls, value: datetime | None) -> datetime | None:
+        return as_utc(value) if value else value

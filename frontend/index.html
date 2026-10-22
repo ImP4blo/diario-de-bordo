@@ -8,7 +8,16 @@
   </head>
   <body>
     <header class="topbar">
-      <h1 class="topbar__title">Diário de Bordo</h1>
+      <div class="topbar__brand">
+        <h1 class="topbar__title">Diário de Bordo</h1>
+        <p class="topbar__credit">
+          Ferramenta desenvolvida por Pablo Mateus de Melo
+          <span aria-hidden="true">·</span>
+          <a href="https://www.linkedin.com/in/pablo-mateus-melo/" target="_blank" rel="noopener">LinkedIn</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://github.com/ImP4blo" target="_blank" rel="noopener">GitHub</a>
+        </p>
+      </div>
       <div id="status" class="status status--idle" role="status" aria-live="polite">
         <span class="status__dot" aria-hidden="true"></span>
         <span id="status-label">Parado</span>
@@ -25,6 +34,27 @@
           <button id="btn-stop" class="btn btn--danger" type="button" hidden>Encerrar dia</button>
         </div>
         <p id="interim" class="interim" aria-live="polite"></p>
+
+        <div class="activity">
+          <span class="activity__label">Atividade atual</span>
+          <strong id="activity-text" class="activity__text"></strong>
+          <span id="activity-since" class="activity__since"></span>
+        </div>
+
+        <form id="note-form" class="note-form">
+          <input
+            id="note-input"
+            class="note-form__input"
+            placeholder="Ou digite uma anotação: ex. Comecei o refinamento do card 1234"
+            aria-label="Nova anotação"
+            autocomplete="off"
+          />
+          <button class="btn" type="submit">Anotar</button>
+        </form>
+        <p class="hint">Dica: comece a fala com <strong>"Diário, ..."</strong> para registrar o que você está fazendo.</p>
+        <p id="notes-only" class="hint" hidden>
+          Modo <strong>só anotações</strong> ativo: falas sem "Diário" não são salvas.
+        </p>
         <p id="message" class="message" hidden></p>
         <p id="outbox" class="message" data-kind="warn" hidden></p>
       </section>
@@ -36,8 +66,17 @@
           <button id="day-next" class="btn btn--ghost" type="button" aria-label="Próximo dia">▶</button>
           <button id="day-today" class="btn btn--ghost" type="button">Hoje</button>
         </nav>
+        <div class="list-tools">
+          <button id="order-toggle" class="btn btn--small btn--ghost" type="button"></button>
+        </div>
         <ol id="entries" class="entries"></ol>
         <p id="empty" class="empty" hidden>Nada registrado neste dia.</p>
+        <div class="export">
+          <span class="hint">Exportar transcrição:</span>
+          <a id="export-day" class="btn btn--small btn--ghost" href="#">Dia (.md)</a>
+          <a id="export-week" class="btn btn--small btn--ghost" href="#">Semana (.md)</a>
+          <a id="export-week-txt" class="btn btn--small btn--ghost" href="#">Semana (.txt)</a>
+        </div>
       </section>
     </main>
 
