@@ -53,7 +53,7 @@ App que transcreve sua voz durante o expediente e usa IA para gerar o **diário 
 
 ## Author
 
-Built by **Pablo Mateus Melo** · [LinkedIn](https://www.linkedin.com/in/pablo-mateus-melo/) · [GitHub](https://github.com/ImP4blo)
+Built by **Pablo Mateus de Melo** · [LinkedIn](https://www.linkedin.com/in/pablo-mateus-melo/) · [GitHub](https://github.com/ImP4blo)
 
 ## License
 
