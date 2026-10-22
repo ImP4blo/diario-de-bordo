@@ -5,10 +5,14 @@ from datetime import date, datetime
 from fastapi import APIRouter, HTTPException, Response
 from sqlmodel import Session, select
 
-from app.deps import SessionDep, UserIdDep
+from app.deps import SessionDep, SettingsDep, UserIdDep
 from app.models import Entry, EntryKind, utcnow
-from app.schemas import EntryCreate, EntryRead, EntryUpdate
+from app.schemas import CurrentActivity, EntryCreate, EntryRead, EntryUpdate
 from app.services.days import local_date_of, to_utc, today
+from app.services.keyword import extract_note
+
+# Entradas que mostram que a pessoa registrou o que está fazendo
+_EXPLICIT_KINDS = (EntryKind.NOTE, EntryKind.CONFIRM, EntryKind.ACTIVITY_CHANGE)
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
@@ -25,22 +29,42 @@ def _optional_utc(dt: datetime | None) -> datetime | None:
     return to_utc(dt) if dt else None
 
 
-@router.post("", response_model=EntryRead, status_code=201)
+@router.post(
+    "",
+    response_model=EntryRead,
+    status_code=201,
+    responses={204: {"description": "Fala descartada (SAVE_MODE=notes_only)"}},
+)
 def create_entry(
     data: EntryCreate,
     user_id: UserIdDep,
     session: SessionDep,
-) -> Entry:
+    settings: SettingsDep,
+) -> Entry | Response:
     ts = to_utc(data.ts) if data.ts else utcnow()
+    kind, text, activity = data.kind, data.text.strip(), data.activity
+
+    # "Diário, ..." no começo transforma a fala em anotação explícita
+    # (numa anotação digitada, só tira a palavra-chave do texto)
+    if kind in (EntryKind.SPEECH, EntryKind.NOTE) and (note := extract_note(text)):
+        kind, text = EntryKind.NOTE, note
+
+    if kind == EntryKind.SPEECH and settings.save_mode == "notes_only":
+        return Response(status_code=204)
+
+    # Uma anotação define a atividade atual (se o cliente não mandou outra)
+    if kind == EntryKind.NOTE and activity is None:
+        activity = text
+
     entry = Entry(
         user_id=user_id,
         ts=ts,
         ends_at=_optional_utc(data.ends_at),
         local_date=local_date_of(ts),
-        kind=data.kind,
-        text=data.text.strip(),
-        is_note=data.kind == EntryKind.NOTE,
-        activity=data.activity,
+        kind=kind,
+        text=text,
+        is_note=kind == EntryKind.NOTE,
+        activity=activity,
     )
     session.add(entry)
     session.commit()
@@ -61,6 +85,33 @@ def list_entries(
         .order_by(Entry.ts)
     )
     return list(session.exec(query))
+
+
+@router.get("/current-activity", response_model=CurrentActivity)
+def current_activity(
+    user_id: UserIdDep,
+    session: SessionDep,
+    day: date | None = None,
+) -> CurrentActivity:
+    """Atividade atual do dia: definida pela anotação (ou troca) mais recente."""
+    query = (
+        select(Entry)
+        .where(
+            Entry.user_id == user_id,
+            Entry.local_date == (day or today()),
+            Entry.kind.in_(_EXPLICIT_KINDS),
+            Entry.activity.is_not(None),
+        )
+        .order_by(Entry.ts.desc())
+    )
+    explicit = list(session.exec(query))
+    if not explicit:
+        return CurrentActivity()
+
+    latest = explicit[0]
+    # "desde": quando a atividade foi DEFINIDA (confirmações não reiniciam)
+    since = next((e.ts for e in explicit if e.kind != EntryKind.CONFIRM), latest.ts)
+    return CurrentActivity(activity=latest.activity, since=since, last_explicit_at=latest.ts)
 
 
 @router.patch("/{entry_id}", response_model=EntryRead)

@@ -25,6 +25,27 @@
           <button id="btn-stop" class="btn btn--danger" type="button" hidden>Encerrar dia</button>
         </div>
         <p id="interim" class="interim" aria-live="polite"></p>
+
+        <div class="activity">
+          <span class="activity__label">Atividade atual</span>
+          <strong id="activity-text" class="activity__text"></strong>
+          <span id="activity-since" class="activity__since"></span>
+        </div>
+
+        <form id="note-form" class="note-form">
+          <input
+            id="note-input"
+            class="note-form__input"
+            placeholder="Ou digite uma anotação: ex. Comecei o refinamento do card 1234"
+            aria-label="Nova anotação"
+            autocomplete="off"
+          />
+          <button class="btn" type="submit">Anotar</button>
+        </form>
+        <p class="hint">Dica: comece a fala com <strong>"Diário, ..."</strong> para registrar o que você está fazendo.</p>
+        <p id="notes-only" class="hint" hidden>
+          Modo <strong>só anotações</strong> ativo: falas sem "Diário" não são salvas.
+        </p>
         <p id="message" class="message" hidden></p>
         <p id="outbox" class="message" data-kind="warn" hidden></p>
       </section>

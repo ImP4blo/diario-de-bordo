@@ -28,6 +28,7 @@ async function request(path, { method = "GET", body } = {}) {
 export const api = {
   config: () => request("/api/config"),
   listEntries: (day) => request(`/api/entries?day=${day}`),
+  currentActivity: (day) => request(`/api/entries/current-activity?day=${day}`),
   createEntry: (data) => request("/api/entries", { method: "POST", body: data }),
   updateEntry: (id, data) => request(`/api/entries/${id}`, { method: "PATCH", body: data }),
   deleteEntry: (id) => request(`/api/entries/${id}`, { method: "DELETE" }),

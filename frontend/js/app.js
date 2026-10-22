@@ -57,15 +57,22 @@ function showMessage(text, kind = "info") {
   el.hidden = !text;
 }
 
+/** "10:05" no fuso configurado */
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: config.timezone,
+  });
+}
+
 function renderState(state) {
   const status = $("status");
   status.className = `status status--${state}`;
 
   const pausedAt = storage.get(PAUSE_KEY);
   $("status-label").textContent =
-    state === "paused" && pausedAt
-      ? `Pausado desde ${new Date(pausedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: config.timezone })}`
-      : STATUS_LABELS[state];
+    state === "paused" && pausedAt ? `Pausado desde ${formatTime(pausedAt)}` : STATUS_LABELS[state];
 
   // Cada estado mostra só os botões que fazem sentido nele
   $("btn-start").hidden = !["idle", "error"].includes(state);
@@ -82,10 +89,45 @@ function renderState(state) {
 
 // --- Salvamento ----------------------------------------------------------
 
-async function handleFinal(text, startedAt) {
-  const entry = await saveEntry({ text, kind: "speech", ts: startedAt.toISOString() });
+async function save(data) {
+  const entry = await saveEntry(data);
   if (entry && entry.local_date === currentDay) dayView.append(entry);
+  if (entry?.kind === "note") showActivity({ activity: entry.activity, since: entry.ts });
   updateOutboxNotice();
+  return entry;
+}
+
+function handleFinal(text, startedAt) {
+  // O servidor decide se é fala comum ou anotação ("Diário, ...")
+  return save({ text, kind: "speech", ts: startedAt.toISOString() });
+}
+
+// --- Atividade atual -----------------------------------------------------
+
+function showActivity({ activity, since }) {
+  $("activity-text").textContent = activity ?? "";
+  $("activity-since").textContent = activity && since ? `desde ${formatTime(since)}` : "";
+}
+
+async function loadActivity() {
+  try {
+    showActivity(await api.currentActivity(todayIn(config.timezone)));
+  } catch {
+    // sem atividade carregada a tela continua funcionando
+  }
+}
+
+async function submitNote(event) {
+  event.preventDefault();
+  const input = $("note-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = "";
+  const now = new Date().toISOString();
+  const entry = await save({ text, kind: "note", ts: now });
+  // Servidor fora: a nota foi para a caixa de saída, mas já vale como atividade atual
+  if (!entry) showActivity({ activity: text, since: now });
 }
 
 function updateOutboxNotice() {
@@ -165,6 +207,10 @@ async function init() {
   $("day-next").addEventListener("click", () => loadDay(addDays(currentDay, 1)));
   $("day-today").addEventListener("click", () => loadDay(todayIn(config.timezone)));
   await loadDay(todayIn(config.timezone));
+  await loadActivity();
+
+  $("note-form").addEventListener("submit", submitNote);
+  $("notes-only").hidden = config.save_mode !== "notes_only";
 
   updateOutboxNotice();
   setInterval(retryOutbox, 15000);
