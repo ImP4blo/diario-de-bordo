@@ -32,6 +32,7 @@ KIND_LABELS = {
     EntryKind.PAUSE: "Pausa",
     EntryKind.CONFIRM: "Confirmação",
     EntryKind.ACTIVITY_CHANGE: "Nova atividade",
+    EntryKind.ACTIVITY_END: "Fim da atividade",
 }
 
 SUGGESTED_PROMPT = """\

@@ -64,6 +64,30 @@ def test_confirmacao_atualiza_ultimo_registro_mas_nao_o_inicio(client):
     assert resultado["last_explicit_at"] == "2026-10-26T13:15:00Z"
 
 
+def test_finalizar_atividade_deixa_sem_atividade_atual(client):
+    falar(client, "Diário, refinamento", ts="2026-10-26T10:00:00-03:00")
+    falar(
+        client,
+        "Finalizou: Refinamento",
+        ts="2026-10-26T10:40:00-03:00",
+        kind="activity_end",
+        activity="Refinamento",
+    )
+
+    assert atividade(client) == {
+        "activity": None,
+        "since": None,
+        "last_explicit_at": "2026-10-26T13:40:00Z",
+    }
+
+
+def test_nova_anotacao_depois_de_finalizar_volta_a_ter_atividade(client):
+    falar(client, "Diário, refinamento", ts="2026-10-26T10:00:00-03:00")
+    falar(client, "Finalizou", ts="2026-10-26T10:40:00-03:00", kind="activity_end", activity="x")
+    falar(client, "Diário, almoço", ts="2026-10-26T12:00:00-03:00")
+    assert atividade(client)["activity"] == "Almoço"
+
+
 def test_modo_so_anotacoes_descarta_falas_comuns(client):
     app.dependency_overrides[get_settings] = lambda: Settings(save_mode="notes_only")
 
