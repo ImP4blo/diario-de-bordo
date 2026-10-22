@@ -68,6 +68,16 @@ body {
   font-size: 1.25rem;
 }
 
+.topbar__credit {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.topbar__credit a {
+  color: var(--accent);
+}
+
 .status {
   --status-color: var(--red);
   display: inline-flex;
