@@ -11,6 +11,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from app.models import Entry, EntryKind
+from app.schemas import RoutineData
 from app.services.days import as_utc
 
 ExportFormat = Literal["md", "txt"]
@@ -42,7 +43,8 @@ SUGGESTED_PROMPT = """\
 > com as colunas Início | Fim | Atividade | Descrição. Regras: português profissional,
 > frases curtas; use só os horários reais da transcrição, sem inventar atividades;
 > agrupe falas da mesma atividade num bloco; ignore conversa irrelevante e ruído;
-> linhas marcadas como ANOTAÇÃO têm prioridade; marque lacunas como "sem registro"."""
+> linhas marcadas como ANOTAÇÃO têm prioridade; inclua os blocos [Rotina] como estão;
+> marque lacunas dentro do expediente como "sem registro"."""
 
 
 def format_day(day: date) -> str:
@@ -61,6 +63,21 @@ def _line(entry: Entry, tz: ZoneInfo) -> str:
     return f"{time} [{label}] {text}".rstrip()
 
 
+def _day_lines(
+    day: date, entries: Iterable[Entry], routine: RoutineData | None, tz: ZoneInfo
+) -> list[str]:
+    """Linhas do dia: entradas + blocos da rotina (só em dias úteis), por horário."""
+    timed = [(as_utc(e.ts).astimezone(tz).time(), _line(e, tz)) for e in entries]
+    if routine and day.weekday() < 5:
+        timed += [
+            (b.start, f"{b.start:%H:%M}–{b.end:%H:%M} [Rotina] {b.activity}")
+            for b in routine.blocks
+        ]
+    # sort é "estável": no mesmo horário, a ordem original se mantém
+    timed.sort(key=lambda item: item[0])
+    return [line for _, line in timed]
+
+
 def build_transcript(
     entries: Iterable[Entry],
     start: date,
@@ -68,6 +85,7 @@ def build_transcript(
     person: str,
     tz: ZoneInfo,
     fmt: ExportFormat = "md",
+    routine: RoutineData | None = None,
 ) -> str:
     """Monta o arquivo. `entries` deve vir ordenado por horário."""
     md = fmt == "md"
@@ -78,8 +96,10 @@ def build_transcript(
         "",
         f"Pessoa: {person}",
         f"Período: {period}",
-        f"Gerado em: {datetime.now(tz):%d/%m/%Y %H:%M}",
     ]
+    if routine:
+        lines.append(f"Expediente: {routine.work_start:%H:%M} às {routine.work_end:%H:%M}")
+    lines.append(f"Gerado em: {datetime.now(tz):%d/%m/%Y %H:%M}")
     if md:
         lines += ["", SUGGESTED_PROMPT]
 
@@ -88,7 +108,8 @@ def build_transcript(
     for day, day_entries in by_day:
         has_any = True
         lines += ["", f"## {format_day(day)}" if md else f"== {format_day(day)} ==", ""]
-        lines += [f"- {_line(e, tz)}" if md else _line(e, tz) for e in day_entries]
+        day_lines = _day_lines(day, day_entries, routine, tz)
+        lines += [f"- {line}" for line in day_lines] if md else day_lines
 
     if not has_any:
         lines += ["", "Nenhum registro no período."]

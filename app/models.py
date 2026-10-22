@@ -4,7 +4,7 @@ Todas têm user_id desde já: na Etapa 1 ele é sempre "local"; na Etapa 2 vira 
 do usuário logado no Supabase, e PC e celular passam a ler o mesmo diário.
 """
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from enum import StrEnum
 
 from sqlmodel import Field, SQLModel
@@ -40,3 +40,26 @@ class Entry(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
+
+
+class WorkSchedule(SQLModel, table=True):
+    """Expediente da pessoa. Ter esta linha também indica que a rotina já foi
+    carregada do arquivo de configuração (assim, apagar todos os blocos não faz
+    a rotina de exemplo "voltar" sozinha)."""
+
+    user_id: str = Field(primary_key=True)
+    work_start: time
+    work_end: time
+
+
+class RoutineBlock(SQLModel, table=True):
+    """Bloco fixo que se repete todo dia útil (daily, intervalo...).
+
+    Horários "de relógio" (sem data nem fuso): 09:15 é 09:15 no fuso configurado.
+    """
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: str = Field(index=True)
+    start: time
+    end: time
+    activity: str

@@ -8,6 +8,7 @@ from sqlmodel import select
 from app.deps import SessionDep, SettingsDep, UserIdDep
 from app.models import Entry
 from app.services.days import get_tz, today, week_bounds
+from app.services.routine import get_routine
 from app.services.transcript import ExportFormat, build_transcript
 
 router = APIRouter(prefix="/api/export", tags=["export"])
@@ -37,8 +38,9 @@ def export_transcript(
         .where(Entry.user_id == user_id, Entry.local_date >= start, Entry.local_date <= end)
         .order_by(Entry.ts)
     )
+    routine = get_routine(session, user_id, settings.routine_file)
     content = build_transcript(
-        session.exec(query), start, end, settings.display_name, get_tz(), fmt
+        session.exec(query), start, end, settings.display_name, get_tz(), fmt, routine
     )
 
     name = f"transcricao_{start}" + ("" if start == end else f"_a_{end}") + f".{fmt}"

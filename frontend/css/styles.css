@@ -502,6 +502,66 @@ body {
   margin: 0;
 }
 
+/* --- Ajustes --- */
+
+.settings__title {
+  margin: 1.5rem 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.settings__title:first-child {
+  margin-top: 0;
+}
+
+.settings__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.settings__row label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings__footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.blocks {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.block__activity {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.settings__row input,
+.block input {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
 /* --- Alerta de inatividade (modal) --- */
 
 .dialog {

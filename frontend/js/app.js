@@ -4,6 +4,7 @@ import { InactivityWatcher, requestNotificationPermission, shortText } from "./a
 import { api, flushOutbox, outboxSize, saveEntry } from "./api.js";
 import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
 import { Recorder } from "./recorder.js";
+import { nowIn, routineStatus } from "./routine.js";
 
 // Guardados no navegador para sobreviver a um F5 ou à aba fechada sem querer
 const STATE_KEY = "diario.recorderState";
@@ -54,6 +55,7 @@ let currentDay;
 let recorder;
 let watcher;
 let currentActivity = null; // texto completo; a tela mostra a versão curta
+let routine = null; // expediente + blocos fixos (carregado da API)
 
 // --- Mensagens e estado visual -------------------------------------------
 
@@ -169,6 +171,37 @@ async function retryOutbox() {
   if (sent > 0) loadDay(currentDay);
 }
 
+// --- Rotina fixa ---------------------------------------------------------
+
+function currentRoutineStatus() {
+  return routine ? routineStatus(routine, nowIn(config.timezone)) : { kind: "work" };
+}
+
+let wasWatching = null;
+
+/** Só alerta gravando, dentro do expediente e fora dos blocos da rotina fixa. */
+function shouldWatchInactivity() {
+  const watching = recorder.state === "recording" && currentRoutineStatus().kind === "work";
+  // Acabou a daily (ou o intervalo, ou começou o expediente): o relógio recomeça.
+  // Sem isso, o alerta pularia no segundo em que a daily termina.
+  if (watching && wasWatching === false) watcher.reset();
+  wasWatching = watching;
+  return watching;
+}
+
+/** Mostra quando a rotina está "segurando" o alerta (bloco fixo ou fora do expediente). */
+function renderRoutineNow() {
+  const status = currentRoutineStatus();
+  const el = $("routine-now");
+  el.hidden = status.kind === "work";
+  if (status.kind === "block") {
+    const { activity, end } = status.block;
+    el.textContent = `🗓 Agora: ${activity} (rotina, até ${end}). Alerta de inatividade pausado.`;
+  } else if (status.kind === "off") {
+    el.textContent = `🌙 Fora do expediente (${routine.work_start}–${routine.work_end}). Alerta de inatividade pausado.`;
+  }
+}
+
 // --- Pausa ---------------------------------------------------------------
 // A pausa vira UMA entrada com início e fim, gravada só ao retomar. Até lá,
 // o início fica guardado no navegador.
@@ -276,6 +309,14 @@ async function init() {
   await loadDay(todayIn(config.timezone));
   await loadActivity();
 
+  try {
+    routine = await api.routine();
+  } catch {
+    // sem rotina: o alerta funciona o dia todo
+  }
+  renderRoutineNow();
+  setInterval(renderRoutineNow, 30_000);
+
   $("note-form").addEventListener("submit", submitNote);
   $("activity-end").addEventListener("click", endActivity);
   $("notes-only").hidden = config.save_mode !== "notes_only";
@@ -312,8 +353,7 @@ async function init() {
   renderNotifyButton();
   watcher = new InactivityWatcher({
     minutes: config.inactivity_minutes,
-    // Só alerta gravando (pausado ou parado, não). A rotina fixa entra na etapa 6.
-    shouldWatch: () => recorder.state === "recording",
+    shouldWatch: shouldWatchInactivity,
     getActivity: () => currentActivity,
     onConfirm: (activity) =>
       save({ kind: "confirm", text: `Continua em: ${activity}`, activity }),
