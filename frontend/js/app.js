@@ -1,7 +1,7 @@
 // Ponto de entrada da página: liga o gravador, a API e a tela do dia.
 
 import { api, flushOutbox, outboxSize, saveEntry } from "./api.js";
-import { addDays, DayView, formatDayLabel, todayIn } from "./day.js";
+import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
 import { Recorder } from "./recorder.js";
 
 // Guardados no navegador para sobreviver a um F5 ou à aba fechada sem querer
@@ -184,6 +184,15 @@ async function loadDay(day) {
   currentDay = day;
   $("day-label").textContent = formatDayLabel(day);
   $("day-next").disabled = day >= todayIn(config.timezone);
+
+  // Os links de exportação acompanham o dia (e a semana) que está na tela
+  const [monday, friday] = weekBounds(day);
+  const exportUrl = (start, end, fmt) =>
+    `/api/export/transcript?start=${start}&end=${end}&fmt=${fmt}`;
+  $("export-day").href = exportUrl(day, day, "md");
+  $("export-week").href = exportUrl(monday, friday, "md");
+  $("export-week-txt").href = exportUrl(monday, friday, "txt");
+
   try {
     dayView.render(await api.listEntries(day));
   } catch {

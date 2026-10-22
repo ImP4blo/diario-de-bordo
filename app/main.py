@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import BASE_DIR
 from app.db import init_db
-from app.routers import config, entries
+from app.routers import config, entries, export
 
 FRONTEND_DIR = BASE_DIR / "frontend"
 
@@ -36,6 +36,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="Diário de Bordo", version="0.1.0", lifespan=lifespan)
 app.include_router(config.router)
 app.include_router(entries.router)
+app.include_router(export.router)
 
 
 @app.get("/api/health")

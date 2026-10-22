@@ -17,6 +17,13 @@ export function addDays(day, n) {
   return date.toISOString().slice(0, 10);
 }
 
+/** Segunda e sexta da semana de `day` (mesma regra de week_bounds no backend). */
+export function weekBounds(day) {
+  const weekday = new Date(`${day}T12:00:00Z`).getUTCDay(); // 0 = domingo
+  const monday = addDays(day, -((weekday + 6) % 7));
+  return [monday, addDays(monday, 4)];
+}
+
 /** Data de hoje ("2026-10-26") no fuso informado. O locale en-CA já formata assim. */
 export function todayIn(timeZone) {
   return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());

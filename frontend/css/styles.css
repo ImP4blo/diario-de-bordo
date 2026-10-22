@@ -351,6 +351,22 @@ body {
   color: var(--text);
 }
 
+.export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.export .hint {
+  margin: 0;
+}
+
+.export .btn {
+  text-decoration: none;
+}
+
 .empty {
   color: var(--muted);
   text-align: center;
