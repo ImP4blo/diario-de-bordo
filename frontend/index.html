@@ -87,18 +87,18 @@
         </nav>
         <div class="list-tools">
           <div class="links" role="group" aria-label="Exportar transcrição">
-            <span class="hint">Exportar:</span>
+            <label class="hint" for="export-format">Exportar:</label>
+            <select id="export-format" class="select">
+              <option value="txt">Texto (.txt)</option>
+              <option value="docx">Word (.docx)</option>
+            </select>
             <a id="export-day" class="link-chip link-chip--accent" href="#">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Dia (.md)
+              Dia <span class="export-ext">(.txt)</span>
             </a>
             <a id="export-week" class="link-chip link-chip--accent" href="#">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Semana (.md)
-            </a>
-            <a id="export-week-txt" class="link-chip link-chip--accent" href="#">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Semana (.txt)
+              Semana <span class="export-ext">(.txt)</span>
             </a>
           </div>
           <button id="order-toggle" class="btn btn--small btn--ghost" type="button"></button>

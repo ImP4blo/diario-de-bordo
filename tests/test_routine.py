@@ -103,7 +103,7 @@ def test_exportacao_intercala_a_rotina_nos_dias_uteis(client, rotina_pessoal):
     for ts in ("2026-10-26T09:00:00-03:00", "2026-10-31T09:00:00-03:00"):  # segunda e sábado
         client.post("/api/entries", json={"ts": ts, "text": "trabalhando"})
 
-    texto = client.get("/api/export/transcript?start=2026-10-26&end=2026-11-01").text
+    texto = client.get("/api/export/transcript?start=2026-10-26&end=2026-11-01&fmt=md").text
 
     assert "Expediente: 08:00 às 17:00" in texto
     segunda, sabado = texto.split("## Sábado")

@@ -185,9 +185,10 @@ SECTIONS = [
             (
                 "ul",
                 [
-                    "**Dia (.md)**, **Semana (.md)** ou **Semana (.txt)**, no fim da lista.",
-                    "O arquivo .md já traz um pedido pronto no topo: cole o arquivo inteiro "
-                    "numa conversa com uma IA (como o Claude) para montar o diário em tabela.",
+                    "Acima da lista, escolha o formato no menu (**Texto .txt** ou **Word .docx**) e "
+                    "clique em **Dia** ou **Semana**.",
+                    "O arquivo já traz um pedido pronto no topo: cole o texto inteiro numa "
+                    "conversa com uma IA (como o Claude) para montar o diário em tabela.",
                 ],
             ),
         ],

@@ -10,6 +10,7 @@ import { nowIn, routineStatus } from "./routine.js";
 const STATE_KEY = "diario.recorderState";
 const PAUSE_KEY = "diario.pauseStartedAt";
 const ORDER_KEY = "diario.newestFirst";
+const EXPORT_KEY = "diario.exportFormat";
 
 const STATUS_LABELS = {
   idle: "Parado",
@@ -258,18 +259,23 @@ function renderOrderToggle() {
     : "↑ Mais antigas primeiro";
 }
 
+/** Os links de exportação seguem o dia (e a semana) na tela e o formato escolhido. */
+function renderExportLinks() {
+  const fmt = $("export-format").value;
+  const [monday, friday] = weekBounds(currentDay);
+  const exportUrl = (start, end) => `/api/export/transcript?start=${start}&end=${end}&fmt=${fmt}`;
+
+  $("export-day").href = exportUrl(currentDay, currentDay);
+  $("export-week").href = exportUrl(monday, friday);
+  document.querySelectorAll(".export-ext").forEach((el) => (el.textContent = `(.${fmt})`));
+}
+
 async function loadDay(day) {
   currentDay = day;
   $("day-label").textContent = formatDayLabel(day);
   $("day-next").disabled = day >= todayIn(config.timezone);
 
-  // Os links de exportação acompanham o dia (e a semana) que está na tela
-  const [monday, friday] = weekBounds(day);
-  const exportUrl = (start, end, fmt) =>
-    `/api/export/transcript?start=${start}&end=${end}&fmt=${fmt}`;
-  $("export-day").href = exportUrl(day, day, "md");
-  $("export-week").href = exportUrl(monday, friday, "md");
-  $("export-week-txt").href = exportUrl(monday, friday, "txt");
+  renderExportLinks();
 
   try {
     dayView.render(await api.listEntries(day));
@@ -301,6 +307,14 @@ async function init() {
     dayView.setNewestFirst(!dayView.newestFirst);
     storage.set(ORDER_KEY, String(dayView.newestFirst));
     renderOrderToggle();
+  });
+
+  // Formato de exportação: lembra a última escolha
+  const savedFormat = storage.get(EXPORT_KEY);
+  if (savedFormat === "txt" || savedFormat === "docx") $("export-format").value = savedFormat;
+  $("export-format").addEventListener("change", () => {
+    storage.set(EXPORT_KEY, $("export-format").value);
+    renderExportLinks();
   });
 
   $("day-prev").addEventListener("click", () => loadDay(addDays(currentDay, -1)));
