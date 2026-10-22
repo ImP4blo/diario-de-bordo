@@ -27,6 +27,8 @@ MAX_CHUNK_CHARS = 12_000
 # Lacunas menores que isso são só "respiros" entre atividades, não "sem registro"
 MIN_GAP = timedelta(minutes=15)
 NO_RECORD = "Sem registro"
+# Uma fala até 5 min depois do fim de um bloco ainda conta como parte dele
+COVERAGE_TOLERANCE = timedelta(minutes=5)
 
 # Escrito à mão (em vez de gerado pelo Pydantic) para ficar simples e aceito por
 # qualquer provedor. A validação de verdade é feita pelo DiaryResult.
@@ -143,16 +145,39 @@ def merge_blocks(blocks: list[DiaryBlock]) -> list[DiaryBlock]:
 
 
 def ensure_routine(blocks: list[DiaryBlock], routine: RoutineData | None) -> list[DiaryBlock]:
-    """Garante que todo bloco da rotina aparece, mesmo que a IA tenha esquecido."""
+    """Garante que todo bloco da rotina aparece uma vez, com o nome oficial.
+
+    A IA às vezes reescreve o nome ("Almoco" em vez de "Almoço"). Por isso o bloco
+    é reconhecido pelo horário de início, não pelo nome.
+    """
     if not routine:
         return blocks
-    present = {(b.inicio, b.atividade.strip().lower()) for b in blocks}
-    missing = [
-        DiaryBlock(inicio=r.start, fim=r.end, atividade=r.activity)
-        for r in routine.blocks
-        if (r.start, r.activity.strip().lower()) not in present
-    ]
-    return sorted([*blocks, *missing], key=lambda b: (b.inicio, b.fim))
+    result = list(blocks)
+    for item in routine.blocks:
+        index = next((i for i, b in enumerate(result) if b.inicio == item.start), None)
+        if index is None:
+            result.append(DiaryBlock(inicio=item.start, fim=item.end, atividade=item.activity))
+        else:
+            found = result[index]
+            result[index] = found.model_copy(update={"atividade": item.activity})
+    return sorted(result, key=lambda b: (b.inicio, b.fim))
+
+
+def uncovered_times(blocks: list[DiaryBlock], lines: list[Line]) -> list[str]:
+    """Horários de anotações (e da última fala) que ficaram fora de todos os blocos.
+
+    A IA às vezes "esquece" um trecho inteiro. Conferir a cobertura é barato e
+    pega esse erro sem depender dela.
+    """
+    spoken = [line for line in lines if line.label in ("Fala", "ANOTAÇÃO")]
+    must_cover = [line for line in spoken if line.label == "ANOTAÇÃO"]
+    if spoken and spoken[-1] not in must_cover:
+        must_cover.append(spoken[-1])
+
+    def covered(moment: time) -> bool:
+        return any(b.inicio <= moment <= _add(b.fim, COVERAGE_TOLERANCE) for b in blocks)
+
+    return [line.time for line in must_cover if not covered(_to_time(line.time[:5]))]
 
 
 def fill_gaps(
@@ -188,7 +213,17 @@ def generate_day(
     chunks = chunk_lines(lines)
     blocks: list[DiaryBlock] = []
     for index, chunk in enumerate(chunks, start=1):
-        blocks += ask_for_blocks(llm, build_prompt(day, chunk, routine, index, len(chunks)))
+        prompt = build_prompt(day, chunk, routine, index, len(chunks))
+        chunk_blocks = ask_for_blocks(llm, prompt)
+        if missing := uncovered_times(chunk_blocks, chunk):
+            # Segunda chance dizendo exatamente o que faltou; se ainda faltar, segue
+            # com o que veio (a pessoa completa na tela de revisão)
+            chunk_blocks = ask_for_blocks(
+                llm,
+                f"{prompt}\n\nSua resposta anterior deixou sem bloco as falas destes "
+                f"horários: {', '.join(missing)}. Refaça incluindo todas elas.",
+            )
+        blocks += chunk_blocks
 
     last_activity_at = _to_time(spoken[-1].time.split("–")[-1])
     blocks = ensure_routine(merge_blocks(blocks), routine)

@@ -200,3 +200,43 @@ def test_dia_util_sem_falas_so_tem_a_rotina():
     assert generate_day(llm, date(2026, 10, 26), rotina_linha, ROTINA) == [
         bloco("09:15", "09:30", "Daily")
     ]
+
+
+# --- Correções vindas do primeiro uso real -----------------------------------
+
+
+def test_rotina_com_nome_reescrito_pela_ia_nao_duplica():
+    rotina = RoutineData(
+        work_start=time(9),
+        work_end=time(18),
+        blocks=[RoutineBlockData(start=time(12), end=time(14), activity="Almoço")],
+    )
+    resultado = ensure_routine([bloco("12:00", "14:00", "Almoco", "Pausa.")], rotina)
+    assert resultado == [bloco("12:00", "14:00", "Almoço", "Pausa.")]
+
+
+def test_ia_que_esquece_um_trecho_recebe_segunda_chance():
+    from app.services.diary import generate_day
+
+    linhas = [
+        Line("09:15–09:30", "Rotina", "Daily"),
+        Line("16:44", "ANOTAÇÃO", "Reunião sobre a API de sinistros"),
+        Line("17:10", "Fala", "fechado então seguimos via API"),
+    ]
+    so_a_manha = resposta(("09:15", "09:30", "Daily"))
+    completa = resposta(("09:15", "09:30", "Daily"), ("16:44", "17:10", "Reunião sobre a API"))
+    llm = FakeLLM(so_a_manha, completa)
+
+    resultado = generate_day(llm, date(2026, 10, 26), linhas, ROTINA)
+
+    assert "Reunião sobre a API" in [b.atividade for b in resultado]
+    assert "16:44" in llm.prompts[1] and "17:10" in llm.prompts[1]
+
+
+def test_resposta_completa_nao_chama_a_ia_de_novo():
+    from app.services.diary import generate_day
+
+    linhas = [Line("10:00", "ANOTAÇÃO", "Refinamento"), Line("10:20", "Fala", "ok")]
+    llm = FakeLLM(resposta(("10:00", "10:20", "Refinamento")))  # só UMA resposta disponível
+    generate_day(llm, date(2026, 10, 26), linhas, None)
+    assert len(llm.prompts) == 1
