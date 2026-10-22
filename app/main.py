@@ -8,14 +8,28 @@ Manter o frontend separado da API desde já é o que permite, na Etapa 2,
 hospedar os dois em lugares diferentes sem reescrever nada.
 """
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.config import BASE_DIR
+from app.db import init_db
+from app.routers import entries
 
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-app = FastAPI(title="Diário de Bordo", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Roda uma vez quando o servidor sobe: garante que o banco existe."""
+    init_db()
+    yield
+
+
+app = FastAPI(title="Diário de Bordo", version="0.1.0", lifespan=lifespan)
+app.include_router(entries.router)
 
 
 @app.get("/api/health")
