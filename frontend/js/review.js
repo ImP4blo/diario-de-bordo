@@ -72,6 +72,7 @@ function daySection({ day, blocks, status, provider }) {
 
 function render(days) {
   $("days").replaceChildren(...days.map(daySection));
+  $("btn-word").disabled = days.length === 0;
   setDirty(false);
 }
 
@@ -105,6 +106,7 @@ async function generate() {
   }
 }
 
+/** Salva todos os dias da tela. Devolve true se deu certo. */
 async function save() {
   const sections = [...document.querySelectorAll(".review-day")];
   const invalid = sections.some((section) =>
@@ -112,7 +114,7 @@ async function save() {
   );
   if (invalid) {
     showMessage("Preencha início, fim e atividade de todos os blocos.", "error");
-    return;
+    return false;
   }
   try {
     const saved = [];
@@ -121,9 +123,17 @@ async function save() {
     }
     render(saved);
     showMessage("Revisão salva!");
+    return true;
   } catch (err) {
     showMessage(err.messages?.join(" · ") ?? "Não foi possível salvar.", "error");
+    return false;
   }
+}
+
+/** Baixa o Word. Se houver edição pendente, salva antes para não baixar versão velha. */
+async function downloadWord() {
+  if (dirty && !(await save())) return;
+  location.href = api.diaryDocxUrl(start, end);
 }
 
 async function init() {
@@ -137,6 +147,7 @@ async function init() {
 
   $("btn-generate").addEventListener("click", generate);
   $("btn-save").addEventListener("click", save);
+  $("btn-word").addEventListener("click", downloadWord);
   // Qualquer digitação nos campos marca a tela como "alterada"
   $("days").addEventListener("input", () => setDirty(true));
   window.addEventListener("beforeunload", (event) => {

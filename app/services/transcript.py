@@ -9,20 +9,16 @@ formato só "desenha" esses dados. Assim texto e Word nunca divergem.
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from io import BytesIO
 from itertools import groupby
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from docx import Document
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, RGBColor
+from docx.shared import Cm, Pt
 
 from app.models import Entry, EntryKind
 from app.schemas import RoutineData
 from app.services.days import as_utc
+from app.services.docx_utils import CellStyle, add_table, new_document, to_bytes
 
 ExportFormat = Literal["txt", "docx", "md"]
 
@@ -154,26 +150,19 @@ def render_text(t: Transcript, fmt: Literal["txt", "md"] = "txt") -> str:
 
 # --- Word (.docx) --------------------------------------------------------------
 
-HEADER_BG = "2F6FDE"
-MUTED = RGBColor(0x64, 0x6B, 0x76)
 COLUMN_WIDTHS = (Cm(2.6), Cm(3.2), Cm(11.2))  # Horário | Tipo | Texto (A4 com margem 2cm)
 
 
-def _shade(cell, hex_color: str) -> None:
-    """python-docx não tem atalho para cor de fundo da célula: editamos o XML direto."""
-    shading = OxmlElement("w:shd")
-    shading.set(qn("w:val"), "clear")
-    shading.set(qn("w:fill"), hex_color)
-    cell._tc.get_or_add_tcPr().append(shading)
+def _line_style(line: Line) -> CellStyle:
+    if line.label == KIND_LABELS[EntryKind.NOTE]:
+        return CellStyle(bold=True)  # anotações em destaque
+    if line.label == ROUTINE_LABEL:
+        return CellStyle(italic=True, muted=True)
+    return CellStyle()
 
 
 def render_docx(t: Transcript) -> bytes:
-    doc = Document()
-    for section in doc.sections:
-        section.left_margin = section.right_margin = Cm(2)
-    doc.styles["Normal"].font.name = "Calibri"
-    doc.styles["Normal"].font.size = Pt(10.5)
-
+    doc = new_document()
     doc.add_heading(TITLE, level=0)
     for info in _info_lines(t):
         doc.add_paragraph(info).paragraph_format.space_after = Pt(0)
@@ -188,31 +177,7 @@ def render_docx(t: Transcript) -> bytes:
 
     for day, day_lines in t.days:
         doc.add_heading(format_day(day), level=2)
-        table = doc.add_table(rows=1, cols=3)
-        table.style = "Table Grid"
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        rows = [((line.time, line.label, line.text), _line_style(line)) for line in day_lines]
+        add_table(doc, ("Horário", "Tipo", "Texto"), COLUMN_WIDTHS, rows)
 
-        for cell, title in zip(table.rows[0].cells, ("Horário", "Tipo", "Texto"), strict=True):
-            _shade(cell, HEADER_BG)
-            run = cell.paragraphs[0].add_run(title)
-            run.bold = True
-            run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-
-        for line in day_lines:
-            cells = table.add_row().cells
-            for cell, value in zip(cells, (line.time, line.label, line.text), strict=True):
-                run = cell.paragraphs[0].add_run(value)
-                if line.label == KIND_LABELS[EntryKind.NOTE]:
-                    run.bold = True  # anotações em destaque
-                elif line.label == ROUTINE_LABEL:
-                    run.italic = True
-                    run.font.color.rgb = MUTED
-
-        # No Word, a largura precisa ser definida célula por célula
-        for row in table.rows:
-            for cell, width in zip(row.cells, COLUMN_WIDTHS, strict=True):
-                cell.width = width
-
-    buffer = BytesIO()
-    doc.save(buffer)
-    return buffer.getvalue()
+    return to_bytes(doc)

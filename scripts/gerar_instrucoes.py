@@ -206,6 +206,8 @@ SECTIONS = [
                     "**Sem registro**, nunca inventados.",
                     "Na tela de **Revisão**, ajuste horários e textos, adicione ou remova "
                     "blocos e clique em **Salvar revisão**.",
+                    "Clique em **Baixar Word** para receber o diário pronto para entregar: "
+                    "nome, período e uma tabela por dia (Início, Fim, Atividade, Descrição).",
                 ],
             ),
             (

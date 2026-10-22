@@ -4,7 +4,7 @@ import json
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
@@ -15,6 +15,7 @@ from app.models import Entry, GeneratedDiary, utcnow
 from app.schemas import DiaryBlock, DiaryDay
 from app.services.days import get_tz, today, week_bounds
 from app.services.diary import generate_day
+from app.services.diary_docx import diary_filename, render_diary_docx
 from app.services.routine import get_routine
 from app.services.transcript import collect
 
@@ -119,6 +120,28 @@ def read_diary(
         .order_by(GeneratedDiary.local_date)
     )
     return [_to_day(diary) for diary in diaries]
+
+
+@router.get("/docx")
+def download_docx(
+    user_id: UserIdDep,
+    session: SessionDep,
+    settings: SettingsDep,
+    start: date | None = None,
+    end: date | None = None,
+) -> Response:
+    """Baixa o diário salvo (revisado ou não) do período em Word."""
+    start, end = _period(start, end)
+    days = read_diary(user_id, session, start, end)
+    if not days:
+        raise HTTPException(status_code=404, detail="Nenhum diário gerado no período.")
+
+    content = render_diary_docx(settings.display_name, start, end, days)
+    return Response(
+        content,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{diary_filename(start, end)}"'},
+    )
 
 
 @router.put("/{day}", response_model=DiaryDay)
