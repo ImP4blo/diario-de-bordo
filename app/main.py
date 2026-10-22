@@ -8,6 +8,7 @@ Manter o frontend separado da API desde já é o que permite, na Etapa 2,
 hospedar os dois em lugares diferentes sem reescrever nada.
 """
 
+import mimetypes
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -16,9 +17,13 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import BASE_DIR
 from app.db import init_db
-from app.routers import entries
+from app.routers import config, entries
 
 FRONTEND_DIR = BASE_DIR / "frontend"
+
+# No Windows, o tipo do .js vem do registro do sistema e às vezes está errado
+# ("text/plain"). Aí o Chrome se recusa a carregar os módulos JS. Forçamos o certo.
+mimetypes.add_type("text/javascript", ".js")
 
 
 @asynccontextmanager
@@ -29,6 +34,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Diário de Bordo", version="0.1.0", lifespan=lifespan)
+app.include_router(config.router)
 app.include_router(entries.router)
 
 

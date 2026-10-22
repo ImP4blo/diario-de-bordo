@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Raiz do projeto (a pasta acima de app/)
@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     # Gravação
     save_mode: Literal["all", "notes_only"] = "all"
     inactivity_minutes: int = 15
+    # Segundos de silêncio que encerram uma fala (junta os trechos picados do Chrome)
+    phrase_gap_seconds: float = Field(default=5, ge=1, le=60)
 
     # Rotina fixa
     routine_file: Path = BASE_DIR / "config" / "routine.toml"

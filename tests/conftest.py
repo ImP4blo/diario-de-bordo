@@ -29,6 +29,7 @@ def session():
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         yield session
+    engine.dispose()  # fecha a conexão; sem isso o Python avisa "unclosed database"
 
 
 @pytest.fixture
