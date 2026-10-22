@@ -123,6 +123,27 @@ SECTIONS = [
         ],
     ),
     (
+        "Alerta de inatividade",
+        [
+            (
+                "p",
+                "Se você passar **15 minutos** (configurável) gravando sem nenhum registro, o app "
+                'pergunta: "Você ainda está em: **sua atividade**?"',
+            ),
+            (
+                "ul",
+                [
+                    "**Sim:** registra que você continua na mesma atividade.",
+                    '**Não:** pede a nova atividade (digite ou fale "Diário, ...").',
+                    "Pausado ou parado, o alerta não aparece.",
+                    "Clique em **Ativar notificações** para receber o alerta mesmo com o "
+                    "Chrome minimizado, com os botões Sim e Não na própria notificação.",
+                ],
+            ),
+            ("tip", "Para mudar o tempo, use INACTIVITY_MINUTES no arquivo .env (1 a 240)."),
+        ],
+    ),
+    (
         "A lista do dia",
         [
             (

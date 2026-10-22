@@ -18,6 +18,8 @@ _EXPLICIT_KINDS = (
     EntryKind.ACTIVITY_CHANGE,
     EntryKind.ACTIVITY_END,
 )
+# Entradas em que "Diário, ..." no começo é reconhecido
+_KEYWORD_KINDS = (EntryKind.SPEECH, EntryKind.NOTE, EntryKind.ACTIVITY_CHANGE)
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
@@ -50,15 +52,16 @@ def create_entry(
     kind, text, activity = data.kind, data.text.strip(), data.activity
 
     # "Diário, ..." no começo transforma a fala em anotação explícita
-    # (numa anotação digitada, só tira a palavra-chave do texto)
-    if kind in (EntryKind.SPEECH, EntryKind.NOTE) and (note := extract_note(text)):
-        kind, text = EntryKind.NOTE, note
+    # (no que foi digitado, só tira a palavra-chave do texto)
+    if kind in _KEYWORD_KINDS and (note := extract_note(text)):
+        kind = EntryKind.NOTE if kind == EntryKind.SPEECH else kind
+        text = note
 
     if kind == EntryKind.SPEECH and settings.save_mode == "notes_only":
         return Response(status_code=204)
 
-    # Uma anotação define a atividade atual (se o cliente não mandou outra)
-    if kind == EntryKind.NOTE and activity is None:
+    # Anotação ou troca de atividade definem a atividade atual (se o cliente não mandou outra)
+    if kind in (EntryKind.NOTE, EntryKind.ACTIVITY_CHANGE) and activity is None:
         activity = text
 
     entry = Entry(

@@ -1,5 +1,6 @@
 // Ponto de entrada da página: liga o gravador, a API e a tela do dia.
 
+import { InactivityWatcher, requestNotificationPermission, shortText } from "./alerts.js";
 import { api, flushOutbox, outboxSize, saveEntry } from "./api.js";
 import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
 import { Recorder } from "./recorder.js";
@@ -23,6 +24,9 @@ const ERROR_MESSAGES = {
   "audio-capture": "Nenhum microfone encontrado. Tentando de novo...",
   network: "Sem conexão com o serviço de voz. Tentando de novo...",
 };
+
+// Registros que mostram o que a pessoa está fazendo: zeram o alerta de inatividade
+const EXPLICIT_KINDS = new Set(["note", "confirm", "activity_change", "activity_end"]);
 
 const $ = (id) => document.getElementById(id);
 
@@ -48,6 +52,8 @@ let config;
 let dayView;
 let currentDay;
 let recorder;
+let watcher;
+let currentActivity = null; // texto completo; a tela mostra a versão curta
 
 // --- Mensagens e estado visual -------------------------------------------
 
@@ -86,6 +92,8 @@ function renderState(state) {
   document.title = `${prefix}Diário de Bordo`;
 
   if (state !== "error") storage.set(STATE_KEY, state);
+  // Começou ou voltou a gravar: o relógio do alerta conta a partir de agora
+  if (state === "recording") watcher?.reset();
 }
 
 // --- Salvamento ----------------------------------------------------------
@@ -93,7 +101,14 @@ function renderState(state) {
 async function save(data) {
   const entry = await saveEntry(data);
   if (entry && entry.local_date === currentDay) dayView.append(entry);
-  if (entry?.kind === "note") showActivity({ activity: entry.activity, since: entry.ts });
+
+  // Servidor fora (entry = null): usamos o que foi enviado, que já está na caixa de saída
+  const saved = entry ?? data;
+  if (saved.kind === "note" || saved.kind === "activity_change") {
+    showActivity({ activity: saved.activity ?? saved.text, since: saved.ts });
+  }
+  if (EXPLICIT_KINDS.has(saved.kind)) watcher?.reset();
+
   updateOutboxNotice();
   return entry;
 }
@@ -106,15 +121,18 @@ function handleFinal(text, startedAt) {
 // --- Atividade atual -----------------------------------------------------
 
 function showActivity({ activity, since }) {
-  $("activity-text").textContent = activity ?? "";
-  $("activity-since").textContent = activity && since ? `desde ${formatTime(since)}` : "";
+  currentActivity = activity || null;
+  // Anotações longas aparecem encurtadas; o texto completo fica no "title" (passe o mouse)
+  $("activity-text").textContent = currentActivity ? shortText(currentActivity) : "";
+  $("activity-text").title = currentActivity ?? "";
+  $("activity-since").textContent = currentActivity && since ? `desde ${formatTime(since)}` : "";
   // Caixa amarela e botão "Finalizar" só quando há atividade em andamento
-  $("activity").classList.toggle("activity--active", Boolean(activity));
-  $("activity-end").hidden = !activity;
+  $("activity").classList.toggle("activity--active", Boolean(currentActivity));
+  $("activity-end").hidden = !currentActivity;
 }
 
 async function endActivity() {
-  const activity = $("activity-text").textContent;
+  const activity = currentActivity;
   if (!activity) return;
   // Some da tela na hora; o registro vai para o servidor (ou para a caixa de saída)
   showActivity({ activity: null });
@@ -136,10 +154,7 @@ async function submitNote(event) {
   if (!text) return;
 
   input.value = "";
-  const now = new Date().toISOString();
-  const entry = await save({ text, kind: "note", ts: now });
-  // Servidor fora: a nota foi para a caixa de saída, mas já vale como atividade atual
-  if (!entry) showActivity({ activity: text, since: now });
+  await save({ text, kind: "note", ts: new Date().toISOString() });
 }
 
 function updateOutboxNotice() {
@@ -171,6 +186,17 @@ async function closePause() {
 function start() {
   showMessage("");
   recorder.start();
+  // Aproveita o clique para pedir permissão de notificação (o Chrome exige um clique)
+  enableNotifications();
+}
+
+async function enableNotifications() {
+  await requestNotificationPermission();
+  renderNotifyButton();
+}
+
+function renderNotifyButton() {
+  $("btn-notify").hidden = !("Notification" in window) || Notification.permission !== "default";
 }
 
 function pause() {
@@ -278,6 +304,21 @@ async function init() {
   $("btn-pause").addEventListener("click", pause);
   $("btn-resume").addEventListener("click", resume);
   $("btn-stop").addEventListener("click", endDay);
+  $("btn-notify").addEventListener("click", enableNotifications);
+
+  // --- Alerta de inatividade ---
+  // O service worker recebe os cliques nos botões da notificação (Sim / Não)
+  navigator.serviceWorker?.register("/sw.js").catch(() => {});
+  renderNotifyButton();
+  watcher = new InactivityWatcher({
+    minutes: config.inactivity_minutes,
+    // Só alerta gravando (pausado ou parado, não). A rotina fixa entra na etapa 6.
+    shouldWatch: () => recorder.state === "recording",
+    getActivity: () => currentActivity,
+    onConfirm: (activity) =>
+      save({ kind: "confirm", text: `Continua em: ${activity}`, activity }),
+    onChange: (text) => save({ kind: "activity_change", text }),
+  });
 
   // Aba fechando: salva o que ainda estava esperando o silêncio
   window.addEventListener("pagehide", () => recorder.flush());

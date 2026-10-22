@@ -40,6 +40,9 @@
           <button id="btn-pause" class="btn btn--warn" type="button" hidden>Pausar</button>
           <button id="btn-resume" class="btn btn--primary" type="button" hidden>Retomar</button>
           <button id="btn-stop" class="btn btn--danger" type="button" hidden>Encerrar dia</button>
+          <button id="btn-notify" class="btn btn--ghost" type="button" hidden>
+            🔔 Ativar notificações
+          </button>
         </div>
         <p id="interim" class="interim" aria-live="polite"></p>
 
@@ -102,6 +105,27 @@
         <a class="link-underline" href="instrucoes.pdf" download="diario-de-bordo-instrucoes.pdf">Instruções</a>
       </p>
     </footer>
+
+    <dialog id="inactivity-dialog" class="dialog" aria-labelledby="inactivity-title">
+      <h2 id="inactivity-title" class="dialog__title"></h2>
+      <div id="inactivity-ask">
+        <p class="dialog__question">
+          Você ainda está em: <strong id="inactivity-activity"></strong>?
+        </p>
+        <div class="dialog__actions">
+          <button id="inactivity-yes" class="btn btn--primary" type="button">Sim</button>
+          <button id="inactivity-no" class="btn" type="button">Não</button>
+        </div>
+      </div>
+      <form id="inactivity-change" hidden>
+        <label id="inactivity-change-label" class="dialog__question" for="inactivity-input"></label>
+        <div class="note-form">
+          <input id="inactivity-input" class="note-form__input" autocomplete="off" />
+          <button class="btn btn--primary" type="submit">Salvar</button>
+        </div>
+        <p class="hint">Ou fale <strong>"Diário, ..."</strong> que o alerta fecha sozinho.</p>
+      </form>
+    </dialog>
 
     <script type="module" src="js/app.js"></script>
   </body>
