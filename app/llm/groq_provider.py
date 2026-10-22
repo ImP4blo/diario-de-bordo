@@ -13,7 +13,7 @@ import groq
 from app.llm.base import LLMError
 
 # Os modelos disponíveis mudam com o tempo: confira em https://console.groq.com/docs/models
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 
 class GroqProvider:
