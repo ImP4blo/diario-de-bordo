@@ -18,7 +18,7 @@ from app.schemas import DiaryBlock, DiaryDay
 from app.services.days import get_tz, today, week_bounds
 from app.services.diary import generate_day
 from app.services.diary_docx import diary_filename, render_diary_docx
-from app.services.routine import get_routine
+from app.services.routine import get_routine, seed_file
 from app.services.transcript import collect
 from app.services.usage import QuotaExceededError, UsageLimiter
 
@@ -109,7 +109,7 @@ def generate(
         .where(Entry.user_id == user.id, Entry.local_date >= start, Entry.local_date <= end)
         .order_by(Entry.ts)
     )
-    routine = get_routine(session, user.id, settings.routine_file)
+    routine = get_routine(session, user.id, seed_file(settings))
     transcript = collect(entries, start, end, user.name, get_tz(), routine)
     if not transcript.days:
         raise HTTPException(status_code=404, detail="Nenhum registro no período para gerar.")

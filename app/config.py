@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     # Só para projetos antigos do Supabase, que assinam tokens com segredo (HS256)
     supabase_jwt_secret: SecretStr | None = None
 
+    # CORS: quais sites podem chamar a API pelo navegador. Online, o site e a API
+    # ficam em endereços diferentes; sem isso, o navegador bloqueia as chamadas.
+    # FRONTEND_HOST vem do Render (só o domínio); ALLOWED_ORIGINS aceita uma
+    # lista separada por vírgula (ex.: http://localhost:8000).
+    frontend_host: str = ""
+    allowed_origins: str = ""
+
     # Usuário e fuso
     local_user_id: str = "local"
     display_name: str = "Seu Nome"
@@ -62,6 +69,13 @@ class Settings(BaseSettings):
     # Quem usar a própria chave não entra na conta.
     daily_refinements_per_user: int = Field(default=3, ge=0)
     daily_refinements_total: int = Field(default=100, ge=0)
+
+    @property
+    def cors_origins(self) -> list[str]:
+        origins = [o.strip().rstrip("/") for o in self.allowed_origins.split(",") if o.strip()]
+        if self.frontend_host:
+            origins.append(f"https://{self.frontend_host}")
+        return origins
 
 
 @lru_cache

@@ -4,14 +4,16 @@
 import { api } from "./api.js";
 import { getUser, initAuth, requireLogin, signOut } from "./auth.js";
 import { initInstallButtons } from "./install.js";
+import { waitForServer } from "./wake.js";
 
 /** Devolve a configuração pública. No modo public, sem login, vai para login.html. */
 export async function startPage() {
+  initInstallButtons();
+  await waitForServer(); // online, a API pode estar "dormindo"
   const config = await api.config();
   await initAuth(config);
   await requireLogin();
   await renderUserBox();
-  initInstallButtons();
   return config;
 }
 
