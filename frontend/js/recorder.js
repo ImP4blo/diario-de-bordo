@@ -23,6 +23,19 @@ const NOTE_KEYWORD = /^\s*di[aá]rio(?![\p{L}\p{N}])/iu;
 
 export const startsWithKeyword = (text) => NOTE_KEYWORD.test(text);
 
+/**
+ * Navegadores baseados no Chrome que têm o recurso de voz "de fachada": o microfone
+ * liga e o indicador fica verde, mas o áudio não vai para o serviço do Google e nada
+ * é transcrito. Devolve o nome do navegador, ou null se ele for de confiança.
+ */
+export function silentSpeechBrowser() {
+  const ua = navigator.userAgent;
+  if (/\bOPR\/|\bOpera\b/.test(ua)) return "Opera";
+  if (/\bVivaldi\b/.test(ua)) return "Vivaldi";
+  if (navigator.brave) return "Brave"; // o Brave se identifica como Chrome, mas expõe isto
+  return null;
+}
+
 // Uma sessão que durou mais que isso "deu certo": zera o contador de falhas.
 const HEALTHY_SESSION_MS = 5000;
 const MAX_RETRY_DELAY_MS = 30000;

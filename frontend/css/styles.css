@@ -1039,21 +1039,68 @@ body {
 /* --- Celular: a linha vira duas --- */
 
 @media (max-width: 600px) {
+  /* Cada fala: horário e tipo na 1ª linha, o texto na largura toda, ações embaixo */
   .entry {
-    grid-template-columns: 3.5rem 1fr;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "time badge"
+      "text text"
+      "actions actions";
+    gap: 0.35rem 0.75rem;
   }
 
-  .entry__badge,
-  .entry__actions {
-    grid-column: 2;
+  .entry__time {
+    grid-area: time;
+  }
+
+  .entry__badge {
+    grid-area: badge;
+    align-self: center;
+  }
+
+  .entry__text,
+  .entry__edit {
+    grid-area: text;
   }
 
   .entry__actions {
+    grid-area: actions;
+    justify-content: flex-end;
     opacity: 1;
   }
 
   .review-block {
     grid-template-columns: 1fr;
+  }
+
+  /* Cabeçalho: marca em cima (linha inteira), pessoa + Sair + status embaixo.
+     No celular ele rola junto com a página: fixo no topo, ocuparia 1/3 da tela. */
+  .topbar {
+    position: static;
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+  }
+
+  .topbar__brand {
+    flex: 1 1 100%;
+  }
+
+  .topbar__title {
+    font-size: 1.15rem;
+    white-space: nowrap;
+  }
+
+  .topbar__right {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .user-box__name {
+    max-width: 9rem;
+  }
+
+  .day-nav__label {
+    font-size: 1rem;
   }
 }
 
@@ -1329,10 +1376,9 @@ body {
 }
 
 /* --- Telas grandes (monitores a partir de ~1400px) ---
-   Celular e notebook não mudam. Em monitores grandes, a página principal vira duas
-   colunas (gravação à esquerda, fixa ao rolar; lista do dia à direita) e a letra
-   cresce um pouco, para ler confortável a distância. Como quase tudo usa "rem",
-   aumentar o tamanho da fonte da página escala o layout inteiro junto. */
+   Celular e notebook não mudam. Em monitores grandes, a página continua em uma
+   coluna, só que mais larga, e a letra cresce um pouco para ler a distância. Como
+   quase tudo usa "rem", aumentar a fonte da página escala o layout inteiro junto. */
 
 @media (min-width: 1400px) {
   html {
@@ -1340,38 +1386,17 @@ body {
   }
 
   .layout {
-    max-width: 960px;
-  }
-
-  .layout--app {
-    max-width: 1400px;
-    grid-template-columns: minmax(380px, 5fr) 7fr;
-    align-items: start;
-    gap: 1.25rem;
-  }
-
-  /* A gravação acompanha a rolagem da lista */
-  .layout--app > .panel:first-child {
-    position: sticky;
-    top: 8rem;
+    max-width: 1040px;
   }
 
   /* Cabeçalho alinhado com o conteúdo, em vez de colado nas bordas da tela */
   .topbar {
-    padding-inline: max(1.25rem, calc((100vw - 1400px) / 2));
+    padding-inline: max(1.25rem, calc((100vw - 1040px) / 2));
   }
 }
 
 @media (min-width: 2200px) {
   html {
     font-size: 18px;
-  }
-
-  .layout--app {
-    max-width: 1600px;
-  }
-
-  .topbar {
-    padding-inline: max(1.25rem, calc((100vw - 1600px) / 2));
   }
 }
