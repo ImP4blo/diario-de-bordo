@@ -37,7 +37,13 @@
       <div class="topbar__right">
         <div id="user-box" class="user-box" hidden>
           <span class="user-box__name"></span>
-          <button class="btn btn--small btn--ghost user-box__logout" type="button">Sair</button>
+          <button class="logout-chip user-box__logout" type="button" aria-label="Sair da conta">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path class="logout-chip__door" d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+              <path class="logout-chip__arrow" d="M14 8l4 4-4 4M18 12H9" />
+            </svg>
+            <span>Sair</span>
+          </button>
         </div>
         <div id="status" class="status status--idle" role="status" aria-live="polite">
           <span class="status__dot" aria-hidden="true"></span>
