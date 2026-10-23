@@ -1327,3 +1327,51 @@ body {
     animation: none;
   }
 }
+
+/* --- Telas grandes (monitores a partir de ~1400px) ---
+   Celular e notebook não mudam. Em monitores grandes, a página principal vira duas
+   colunas (gravação à esquerda, fixa ao rolar; lista do dia à direita) e a letra
+   cresce um pouco, para ler confortável a distância. Como quase tudo usa "rem",
+   aumentar o tamanho da fonte da página escala o layout inteiro junto. */
+
+@media (min-width: 1400px) {
+  html {
+    font-size: 17px;
+  }
+
+  .layout {
+    max-width: 960px;
+  }
+
+  .layout--app {
+    max-width: 1400px;
+    grid-template-columns: minmax(380px, 5fr) 7fr;
+    align-items: start;
+    gap: 1.25rem;
+  }
+
+  /* A gravação acompanha a rolagem da lista */
+  .layout--app > .panel:first-child {
+    position: sticky;
+    top: 8rem;
+  }
+
+  /* Cabeçalho alinhado com o conteúdo, em vez de colado nas bordas da tela */
+  .topbar {
+    padding-inline: max(1.25rem, calc((100vw - 1400px) / 2));
+  }
+}
+
+@media (min-width: 2200px) {
+  html {
+    font-size: 18px;
+  }
+
+  .layout--app {
+    max-width: 1600px;
+  }
+
+  .topbar {
+    padding-inline: max(1.25rem, calc((100vw - 1600px) / 2));
+  }
+}
