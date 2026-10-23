@@ -1,3 +1,5 @@
+<p align="center"><img src="frontend/icons/logo.svg" alt="Diário de Bordo" width="320" /></p>
+
 # Diário de Bordo
 
 > 🚧 Work in progress — Stage 1 (local version) under construction.

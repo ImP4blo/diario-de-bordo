@@ -64,8 +64,16 @@ body {
 }
 
 .topbar__title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   margin: 0;
   font-size: 1.25rem;
+}
+
+.topbar__logo {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .topbar__credit {
