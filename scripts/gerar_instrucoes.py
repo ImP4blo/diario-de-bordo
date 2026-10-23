@@ -195,12 +195,36 @@ SECTIONS = [
         ],
     ),
     (
+        "Diário com IA",
+        [
+            (
+                "ol",
+                [
+                    "Na lista do dia, clique em **Gerar do dia** ou **Gerar da semana**.",
+                    "A IA organiza a transcrição em blocos (início, fim, atividade e "
+                    "descrição). Períodos do expediente sem informação aparecem como "
+                    "**Sem registro**, nunca inventados.",
+                    "Na tela de **Revisão**, ajuste horários e textos, adicione ou remova "
+                    "blocos e clique em **Salvar revisão**.",
+                ],
+            ),
+            (
+                "tip",
+                "Configure a IA no .env: LLM_PROVIDER=groq (gratuito) com GROQ_API_KEY, ou "
+                "LLM_PROVIDER=anthropic com ANTHROPIC_API_KEY. A chave nunca vai para o "
+                "navegador nem para o Git.",
+            ),
+        ],
+    ),
+    (
         "Privacidade",
         [
             (
                 "ul",
                 [
                     "O reconhecimento de voz do Chrome envia o áudio para servidores do Google.",
+                    "Ao gerar o diário, a transcrição é enviada ao provedor de IA escolhido "
+                    "(Groq ou Anthropic).",
                     "A transcrição fica salva só no seu computador (pasta data/).",
                     "Antes de usar no trabalho, confirme se as políticas da empresa permitem.",
                     "Quer salvar só as anotações? Use **SAVE_MODE=notes_only** no arquivo .env.",

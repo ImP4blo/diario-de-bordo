@@ -27,7 +27,7 @@ def rotina_pessoal(tmp_path):
     """Aponta ROUTINE_FILE para um TOML temporário (tmp_path é uma pasta descartável)."""
     arquivo = tmp_path / "routine.toml"
     arquivo.write_text(ROTINA_TOML, encoding="utf-8")
-    app.dependency_overrides[get_settings] = lambda: Settings(routine_file=arquivo)
+    app.dependency_overrides[get_settings] = lambda: Settings(_env_file=None, routine_file=arquivo)
     return arquivo
 
 

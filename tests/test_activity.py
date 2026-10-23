@@ -105,7 +105,9 @@ def test_resposta_nao_do_alerta_troca_a_atividade(client):
 
 
 def test_modo_so_anotacoes_descarta_falas_comuns(client):
-    app.dependency_overrides[get_settings] = lambda: Settings(save_mode="notes_only")
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        _env_file=None, save_mode="notes_only"
+    )
 
     assert falar(client, "conversa com o time").status_code == 204
     assert falar(client, "Diário, reunião com o PO").status_code == 201
