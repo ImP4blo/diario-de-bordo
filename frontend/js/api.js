@@ -97,6 +97,7 @@ export const api = {
   deleteEntry: (id) => request(`/api/entries/${id}`, { method: "DELETE" }),
   routine: () => request("/api/routine"),
   saveRoutine: (data) => request("/api/routine", { method: "PUT", body: data }),
+  deleteAccount: () => request("/api/me", { method: "DELETE" }),
   diary: (start, end) => request(`/api/diary?start=${start}&end=${end}`),
   // Com chave própria salva, ela vai junto (só nesta chamada) e não há limite diário
   generateDiary: (start, end) => {

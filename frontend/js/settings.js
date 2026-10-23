@@ -1,6 +1,7 @@
 // Tela de Ajustes: edita o expediente e os blocos da rotina fixa.
 
 import { api } from "./api.js";
+import { signOut } from "./auth.js";
 import {
   getOwnKey,
   maskKey,
@@ -116,6 +117,46 @@ function initOwnKey() {
   });
 }
 
+// --- Apagar a conta (LGPD) -----------------------------------------------------
+
+const CONFIRM_WORD = "APAGAR";
+
+function initDangerZone(config) {
+  if (config.app_mode !== "public") return; // no modo local não existe conta
+  $("danger-zone").hidden = false;
+
+  // O botão só liga quando a pessoa digita a palavra exata: evita clique sem querer
+  $("delete-confirm").addEventListener("input", () => {
+    $("delete-button").disabled = $("delete-confirm").value.trim() !== CONFIRM_WORD;
+  });
+
+  $("delete-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if ($("delete-confirm").value.trim() !== CONFIRM_WORD) return;
+    $("delete-button").disabled = true;
+    try {
+      const result = await api.deleteAccount();
+      // Limpa o que ficou neste navegador (chave própria, caixa de saída, preferências)
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith("diario."))
+          .forEach((k) => localStorage.removeItem(k));
+      } catch {
+        // sem armazenamento: nada a limpar
+      }
+      $("delete-message").textContent = `${result.message} Saindo...`;
+      $("delete-message").hidden = false;
+      setTimeout(signOut, 2500);
+    } catch (err) {
+      $("delete-message").textContent =
+        err.messages?.join(" · ") ?? "Não foi possível apagar a conta.";
+      $("delete-message").dataset.kind = "error";
+      $("delete-message").hidden = false;
+      $("delete-button").disabled = false;
+    }
+  });
+}
+
 async function init() {
   initOwnKey();
   $("add-block").addEventListener("click", () =>
@@ -123,7 +164,7 @@ async function init() {
   );
   $("routine-form").addEventListener("submit", save);
   try {
-    await startPage();
+    initDangerZone(await startPage());
     render(await api.routine());
   } catch {
     showMessage("Servidor fora do ar. Rode o uvicorn e recarregue a página.", "error");
