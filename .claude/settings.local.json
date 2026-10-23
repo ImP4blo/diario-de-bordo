@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"privacidade.html -> %{http_code}\\\\n\" http://localhost:8000/privacidade.html)",
+      "Bash(curl -s http://localhost:8000/login.html)",
+      "Bash(python -m uv run pytest -q)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(gh pr *)"
+    ]
+  }
+}
