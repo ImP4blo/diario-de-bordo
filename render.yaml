@@ -4,6 +4,10 @@
 #   1. diario-de-bordo-api -> a API em Python (dorme após ~15 min sem uso)
 #   2. diario-de-bordo     -> o site estático (não dorme; mostra "acordando o servidor")
 #
+# Endereços públicos (o Render acrescenta um sufixo quando o nome já existe):
+#   site: https://diario-de-bordo-yx50.onrender.com
+#   API:  https://diario-de-bordo-api.onrender.com
+#
 # Valores com "sync: false" são pedidos no painel do Render na criação: segredos
 # (senha do banco, chave do Groq) nunca ficam neste arquivo, que é público no GitHub.
 
@@ -26,12 +30,10 @@ services:
         value: "3"
       - key: DAILY_REFINEMENTS_TOTAL
         value: "100"
-      # Endereço do site, para o CORS liberar só ele (preenchido pelo próprio Render)
-      - key: FRONTEND_HOST
-        fromService:
-          type: web
-          name: diario-de-bordo
-          property: host
+      # Endereço PÚBLICO do site, para o CORS liberar só ele. (O "fromService/host"
+      # do Render entrega o nome interno, sem ".onrender.com", e por isso não serve.)
+      - key: ALLOWED_ORIGINS
+        value: https://diario-de-bordo-yx50.onrender.com
       # Pedidos no painel (sync: false)
       - key: DATABASE_URL # Session pooler do Supabase, com a senha
         sync: false
@@ -46,15 +48,12 @@ services:
     name: diario-de-bordo
     runtime: static
     branch: main
-    # Escreve no config.js o endereço da API (que o Render só conhece na criação)
-    buildCommand: echo "window.DIARIO_API_URL = \"https://$API_HOST\";" > frontend/config.js
+    # Escreve no config.js o endereço público da API
+    buildCommand: echo "window.DIARIO_API_URL = \"$API_URL\";" > frontend/config.js
     staticPublishPath: frontend
     envVars:
-      - key: API_HOST
-        fromService:
-          type: web
-          name: diario-de-bordo-api
-          property: host
+      - key: API_URL
+        value: https://diario-de-bordo-api.onrender.com
     headers:
       # CSP: o navegador só executa e só conversa com o que está nesta lista.
       # Protege a chave de IA guardada no navegador contra scripts injetados.
@@ -65,7 +64,7 @@ services:
           script-src 'self' https://cdn.jsdelivr.net;
           style-src 'self';
           img-src 'self' data: blob: https://*.googleusercontent.com;
-          connect-src 'self' https://*.onrender.com https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net;
+          connect-src 'self' https://diario-de-bordo-api.onrender.com https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net;
           worker-src 'self';
           manifest-src 'self';
           object-src 'none';
