@@ -1,13 +1,20 @@
 """Tabelas do banco.
 
-Todas têm user_id desde já: na Etapa 1 ele é sempre "local"; na Etapa 2 vira o id
-do usuário logado no Supabase, e PC e celular passam a ler o mesmo diário.
+Todas têm user_id: no modo local ele é sempre "local"; online é o id da conta
+logada no Supabase, e PC e celular passam a ler o mesmo diário.
+
+Mudou alguma tabela? Gere a migração (veja migrations/README):
+    python -m uv run alembic revision --autogenerate -m "descrição"
 """
 
 from datetime import UTC, date, datetime, time
 from enum import StrEnum
 
+from sqlalchemy import DateTime, Enum
 from sqlmodel import Field, SQLModel
+
+# Data e hora COM fuso: no Postgres vira "timestamptz" (no SQLite tanto faz)
+UTC_DATETIME = DateTime(timezone=True)
 
 
 def utcnow() -> datetime:
@@ -29,17 +36,21 @@ class Entry(SQLModel, table=True):
 
     # Horários sempre em UTC. O "dia" do diário fica pré-calculado em local_date,
     # no fuso configurado, para buscar por dia sem fazer conta de fuso no SQL.
-    ts: datetime
-    ends_at: datetime | None = None
+    ts: datetime = Field(sa_type=UTC_DATETIME)
+    ends_at: datetime | None = Field(default=None, sa_type=UTC_DATETIME)
     local_date: date = Field(index=True)
 
-    kind: EntryKind = EntryKind.SPEECH
+    # native_enum=False: guarda como texto. Um "enum nativo" do Postgres exigiria
+    # uma migração especial a cada tipo novo de entrada
+    kind: EntryKind = Field(
+        default=EntryKind.SPEECH, sa_type=Enum(EntryKind, native_enum=False, length=32)
+    )
     text: str = ""
     is_note: bool = False
     activity: str | None = None  # atividade atual que a entrada define/confirma
 
-    created_at: datetime = Field(default_factory=utcnow)
-    updated_at: datetime = Field(default_factory=utcnow)
+    created_at: datetime = Field(default_factory=utcnow, sa_type=UTC_DATETIME)
+    updated_at: datetime = Field(default_factory=utcnow, sa_type=UTC_DATETIME)
 
 
 class GeneratedDiary(SQLModel, table=True):
@@ -53,8 +64,8 @@ class GeneratedDiary(SQLModel, table=True):
     local_date: date = Field(primary_key=True)
     blocks_json: str
     status: str = "draft"  # draft = saiu da IA | reviewed = revisado pela pessoa
-    provider: str = ""  # quem gerou (ex.: "groq / llama-3.3-70b-versatile")
-    updated_at: datetime = Field(default_factory=utcnow)
+    provider: str = ""  # quem gerou (ex.: "groq / openai/gpt-oss-120b")
+    updated_at: datetime = Field(default_factory=utcnow, sa_type=UTC_DATETIME)
 
 
 class WorkSchedule(SQLModel, table=True):

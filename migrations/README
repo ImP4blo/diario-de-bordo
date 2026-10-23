@@ -1,0 +1,17 @@
+Migrações do banco (Alembic)
+
+As migrações são o "histórico de versões" das tabelas, como um Git do banco.
+Elas rodam sozinhas quando o servidor sobe (app/db.py -> init_db).
+
+Mudou um modelo em app/models.py? Gere uma migração nova:
+
+    python -m uv run alembic revision --autogenerate -m "o que mudou"
+
+Confira o arquivo criado em migrations/versions/ antes de fazer o commit.
+O teste tests/test_migrations.py falha se um modelo mudar sem migração.
+
+Comandos úteis:
+
+    python -m uv run alembic current    # versão atual do banco
+    python -m uv run alembic history    # lista de migrações
+    python -m uv run alembic upgrade head   # aplica as que faltam
