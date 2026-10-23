@@ -79,6 +79,7 @@ body {
 .links {
   display: flex;
   flex-wrap: wrap;
+  align-items: center; /* rótulo e chips na mesma linha, centralizados */
   gap: 0.4rem;
   margin-top: 0.4rem;
 }
@@ -1048,10 +1049,29 @@ body {
   }
 }
 
+/* Rodapé: "Baixar app" no mesmo tamanho e formato dos chips de LinkedIn/GitHub */
 .footer .install-group {
-  margin-bottom: 1rem;
+  margin: 0 0 1rem;
 }
 
 .footer .install-group .hint {
   margin: 0;
+  font-size: 0.8rem;
+}
+
+.footer .install-chip {
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8rem;
+  border-radius: 999px;
+}
+
+.footer .install-chip svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.footer .install-chip:hover,
+.footer .install-chip:focus-visible {
+  transform: translateY(-2px);
 }
