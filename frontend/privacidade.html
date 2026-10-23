@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2f6fde" />
+    <title>Política de Privacidade · Diário de Bordo</title>
+    <meta name="description" content="Como o Diário de Bordo trata os seus dados." />
+    <link rel="icon" href="icons/logo-mark.svg" type="image/svg+xml" />
+    <link rel="icon" href="icons/favicon.png" type="image/png" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__brand">
+        <p class="topbar__title">
+          <img class="topbar__logo" src="icons/logo-mark.svg" alt="" width="32" height="32" />
+          Diário de Bordo
+        </p>
+      </div>
+      <a class="link-chip" href="login.html">← Voltar ao app</a>
+    </header>
+
+    <main class="layout">
+      <article class="panel doc">
+        <h1>Política de Privacidade</h1>
+        <p class="hint">Última atualização: 22 de outubro de 2026</p>
+
+        <p>
+          O <strong>Diário de Bordo</strong> é um projeto pessoal, gratuito e de código aberto,
+          desenvolvido por <strong>Pablo Mateus de Melo</strong>. Ele transcreve o que você fala
+          durante o expediente e usa inteligência artificial para montar o seu diário de bordo.
+          Esta página explica, em linguagem simples, quais dados o app usa, por que e com quem eles
+          são compartilhados, conforme a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018).
+        </p>
+
+        <h2>1. Quais dados guardamos</h2>
+        <ul>
+          <li>
+            <strong>Dados da conta:</strong> nome, e-mail e um identificador interno, recebidos do
+            Google ou do link de acesso por e-mail no momento do login.
+          </li>
+          <li>
+            <strong>Conteúdo que você cria:</strong> o texto das falas reconhecidas, as anotações,
+            as pausas, a sua rotina e expediente, e os diários gerados e revisados.
+          </li>
+          <li>
+            <strong>Uso diário da IA:</strong> um contador de quantos diários você gerou em cada dia,
+            para aplicar o limite gratuito.
+          </li>
+        </ul>
+        <p><strong>Não guardamos o áudio.</strong> O app recebe apenas o texto já reconhecido.</p>
+
+        <h2>2. Para que usamos</h2>
+        <p>
+          Exclusivamente para o funcionamento do app: salvar os seus registros, montar o seu diário,
+          gerar os arquivos que você baixa e aplicar o limite de uso. Não vendemos dados, não
+          exibimos anúncios e não usamos ferramentas de rastreamento ou análise de comportamento.
+        </p>
+
+        <h2>3. Com quem os dados são compartilhados</h2>
+        <p>
+          Para funcionar, o app usa serviços de terceiros, com servidores nos Estados Unidos
+          (transferência internacional de dados):
+        </p>
+        <ul>
+          <li>
+            <strong>Google (reconhecimento de voz):</strong> no Google Chrome, o áudio do microfone é
+            enviado aos servidores do Google para virar texto. Isso é feito pelo próprio navegador.
+          </li>
+          <li><strong>Supabase:</strong> login e banco de dados onde os seus registros ficam salvos.</li>
+          <li><strong>Render:</strong> hospedagem do site e do servidor do app.</li>
+          <li>
+            <strong>Groq:</strong> quando você clica em gerar o diário, a transcrição do período é
+            enviada a esse serviço de IA para ser organizada.
+          </li>
+          <li>
+            <strong>Google Gemini (opcional):</strong> se você cadastrar a sua própria chave do
+            Google AI Studio, a transcrição é enviada ao Gemini com a sua chave. No plano gratuito
+            do Google AI Studio, o Google pode usar o conteúdo enviado para melhorar os produtos dele.
+          </li>
+        </ul>
+
+        <h2>4. A sua chave de IA</h2>
+        <p>
+          Se você cadastrar uma chave própria, ela fica <strong>somente no seu navegador</strong>.
+          Ela é enviada ao servidor apenas no momento de gerar o diário, por conexão segura (HTTPS),
+          usada naquela chamada e descartada. Ela não é salva no banco nem registrada em logs, e você
+          pode removê-la a qualquer momento em Ajustes.
+        </p>
+
+        <h2>5. Armazenamento no navegador</h2>
+        <p>
+          O app guarda no seu navegador apenas o necessário para funcionar: a sessão de login, as
+          suas preferências (ordem da lista, formato de exportação), a chave própria (se houver) e
+          uma "caixa de saída" que segura falas quando o servidor está fora do ar, para não perdê-las.
+          Não usamos cookies de publicidade.
+        </p>
+
+        <h2>6. Segurança</h2>
+        <p>
+          Toda a comunicação usa HTTPS. Cada conta só acessa os próprios registros, e o banco de
+          dados bloqueia acessos diretos pela API pública do Supabase. Nenhum sistema é 100% seguro,
+          mas tratamos os seus dados com cuidado.
+        </p>
+
+        <h2>7. Por quanto tempo</h2>
+        <p>
+          Os dados ficam guardados enquanto a sua conta existir. Você pode editar ou apagar qualquer
+          registro e diário pelo próprio app. Para excluir a conta e todos os dados, entre em contato
+          pelos canais abaixo.
+        </p>
+
+        <h2>8. Os seus direitos (LGPD)</h2>
+        <p>
+          Você pode, a qualquer momento: confirmar quais dados existem, acessá-los, corrigi-los,
+          exportá-los (o app já baixa a transcrição em .txt e o diário em Word), pedir a exclusão e
+          revogar o consentimento deixando de usar o app.
+        </p>
+
+        <h2>9. Uso no trabalho</h2>
+        <p>
+          As falas podem conter informações da empresa onde você trabalha. Antes de usar o app no
+          trabalho, confirme se as políticas da sua empresa permitem.
+        </p>
+
+        <h2>10. Contato</h2>
+        <p>
+          Dúvidas ou pedidos sobre os seus dados: fale com Pablo Mateus de Melo pelo
+          <a href="https://www.linkedin.com/in/pablo-mateus-melo/" target="_blank" rel="noopener">LinkedIn</a>
+          ou abra uma issue no
+          <a href="https://github.com/ImP4blo/diario-de-bordo/issues" target="_blank" rel="noopener">GitHub do projeto</a>.
+        </p>
+
+        <h2>11. Mudanças nesta política</h2>
+        <p>
+          Se esta política mudar, a data no topo da página será atualizada. O histórico completo de
+          alterações fica público no repositório do projeto.
+        </p>
+      </article>
+    </main>
+  </body>
+</html>
