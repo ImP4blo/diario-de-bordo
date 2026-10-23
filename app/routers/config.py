@@ -6,14 +6,17 @@ Nunca exponha chaves de API aqui: tudo o que esta rota devolve fica visível no 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.config import get_settings
+from app.deps import SettingsDep
 from app.services.days import today
 
 router = APIRouter(prefix="/api/config", tags=["config"])
 
 
 class PublicConfig(BaseModel):
-    display_name: str
+    app_mode: str
+    # Dados públicos do Supabase, que o navegador usa para fazer o login
+    supabase_url: str
+    supabase_publishable_key: str
     timezone: str
     today: str
     save_mode: str
@@ -22,10 +25,11 @@ class PublicConfig(BaseModel):
 
 
 @router.get("", response_model=PublicConfig)
-def get_public_config() -> PublicConfig:
-    settings = get_settings()
+def get_public_config(settings: SettingsDep) -> PublicConfig:
     return PublicConfig(
-        display_name=settings.display_name,
+        app_mode=settings.app_mode,
+        supabase_url=settings.supabase_url,
+        supabase_publishable_key=settings.supabase_publishable_key,
         timezone=settings.timezone,
         today=today().isoformat(),
         save_mode=settings.save_mode,

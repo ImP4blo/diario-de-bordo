@@ -1,6 +1,7 @@
 // Tela de Ajustes: edita o expediente e os blocos da rotina fixa.
 
 import { api } from "./api.js";
+import { startPage } from "./session.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -74,6 +75,7 @@ async function init() {
   );
   $("routine-form").addEventListener("submit", save);
   try {
+    await startPage();
     render(await api.routine());
   } catch {
     showMessage("Servidor fora do ar. Rode o uvicorn e recarregue a página.", "error");

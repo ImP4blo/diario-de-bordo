@@ -4,6 +4,8 @@
 // frase for reconhecida, ela fica guardada no navegador e é reenviada depois.
 // Assim nada se perde. O horário vai junto, então a frase entra no lugar certo.
 
+import { getAccessToken, goToLogin } from "./auth.js";
+
 const OUTBOX_KEY = "diario.outbox";
 
 class ApiError extends Error {
@@ -25,16 +27,46 @@ class ApiError extends Error {
   }
 }
 
-async function request(path, { method = "GET", body } = {}) {
+/** Cabeçalhos de toda requisição: o "crachá" de login (modo public) e o tipo do corpo. */
+async function headers(body) {
+  const result = {};
+  if (body) result["Content-Type"] = "application/json";
+  const token = await getAccessToken();
+  if (token) result.Authorization = `Bearer ${token}`;
+  return result;
+}
+
+async function send(path, { method = "GET", body } = {}) {
   const response = await fetch(path, {
     method,
     // keepalive: a requisição termina mesmo se a aba for fechada no meio dela
     keepalive: method !== "GET",
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers: await headers(body),
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!response.ok) throw new ApiError(response.status, await response.text());
+  if (!response.ok) {
+    const error = new ApiError(response.status, await response.text());
+    if (response.status === 401) goToLogin(); // sessão venceu: entrar de novo
+    throw error;
+  }
+  return response;
+}
+
+async function request(path, options) {
+  const response = await send(path, options);
   return response.status === 204 ? null : response.json();
+}
+
+/** Baixa um arquivo da API. Um link comum (<a href>) não levaria o token de login. */
+export async function download(path) {
+  const response = await send(path);
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? "arquivo";
+
+  const url = URL.createObjectURL(await response.blob());
+  const link = Object.assign(document.createElement("a"), { href: url, download: filename });
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export const api = {
@@ -72,7 +104,9 @@ function writeOutbox(items) {
 }
 
 // Erro 4xx significa dado inválido: reenviar não adianta, então não vai pra caixa.
-const isRetryable = (err) => !(err instanceof ApiError && err.status >= 400 && err.status < 500);
+// Exceção: 401 (sessão vencida). Depois de entrar de novo, o reenvio funciona.
+const isRetryable = (err) =>
+  !(err instanceof ApiError && err.status >= 400 && err.status < 500 && err.status !== 401);
 
 /** Salva uma entrada; se o servidor não responder, guarda para reenviar. */
 export async function saveEntry(data) {

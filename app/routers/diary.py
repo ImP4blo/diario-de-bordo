@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
-from app.deps import SessionDep, SettingsDep, UserIdDep
+from app.deps import CurrentUserDep, SessionDep, SettingsDep, UserIdDep
 from app.llm.base import LLMError, LLMNotConfiguredError, LLMProvider
 from app.llm.factory import create_llm
 from app.models import Entry, GeneratedDiary, utcnow
@@ -73,7 +73,7 @@ def _save(
 
 @router.post("/generate", response_model=list[DiaryDay])
 def generate(
-    user_id: UserIdDep,
+    user: CurrentUserDep,
     session: SessionDep,
     settings: SettingsDep,
     llm: LLMDep,
@@ -84,11 +84,11 @@ def generate(
     start, end = _period(start, end)
     entries = session.exec(
         select(Entry)
-        .where(Entry.user_id == user_id, Entry.local_date >= start, Entry.local_date <= end)
+        .where(Entry.user_id == user.id, Entry.local_date >= start, Entry.local_date <= end)
         .order_by(Entry.ts)
     )
-    routine = get_routine(session, user_id, settings.routine_file)
-    transcript = collect(entries, start, end, settings.display_name, get_tz(), routine)
+    routine = get_routine(session, user.id, settings.routine_file)
+    transcript = collect(entries, start, end, user.name, get_tz(), routine)
     if not transcript.days:
         raise HTTPException(status_code=404, detail="Nenhum registro no período para gerar.")
 
@@ -101,7 +101,7 @@ def generate(
         except LLMError as err:
             # 502: o problema foi no serviço de IA, não no pedido do usuário
             raise HTTPException(status_code=502, detail=str(err)) from err
-        result.append(_to_day(_save(session, user_id, day, blocks, "draft", provider)))
+        result.append(_to_day(_save(session, user.id, day, blocks, "draft", provider)))
     return result
 
 
@@ -124,19 +124,18 @@ def read_diary(
 
 @router.get("/docx")
 def download_docx(
-    user_id: UserIdDep,
+    user: CurrentUserDep,
     session: SessionDep,
-    settings: SettingsDep,
     start: date | None = None,
     end: date | None = None,
 ) -> Response:
     """Baixa o diário salvo (revisado ou não) do período em Word."""
     start, end = _period(start, end)
-    days = read_diary(user_id, session, start, end)
+    days = read_diary(user.id, session, start, end)
     if not days:
         raise HTTPException(status_code=404, detail="Nenhum diário gerado no período.")
 
-    content = render_diary_docx(settings.display_name, start, end, days)
+    content = render_diary_docx(user.name, start, end, days)
     return Response(
         content,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",

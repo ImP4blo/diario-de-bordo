@@ -17,13 +17,14 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import BASE_DIR
 from app.db import init_db
-from app.routers import config, diary, entries, export, routine
+from app.routers import config, diary, entries, export, me, routine
 
 FRONTEND_DIR = BASE_DIR / "frontend"
 
 # No Windows, o tipo do .js vem do registro do sistema e às vezes está errado
 # ("text/plain"). Aí o Chrome se recusa a carregar os módulos JS. Forçamos o certo.
 mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.include_router(entries.router)
 app.include_router(export.router)
 app.include_router(routine.router)
 app.include_router(diary.router)
+app.include_router(me.router)
 
 
 @app.get("/api/health")

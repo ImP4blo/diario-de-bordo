@@ -1,10 +1,11 @@
 // Ponto de entrada da página: liga o gravador, a API e a tela do dia.
 
 import { InactivityWatcher, requestNotificationPermission, shortText } from "./alerts.js";
-import { api, flushOutbox, outboxSize, saveEntry } from "./api.js";
+import { api, download, flushOutbox, outboxSize, saveEntry } from "./api.js";
 import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
 import { Recorder } from "./recorder.js";
 import { nowIn, routineStatus } from "./routine.js";
+import { startPage } from "./session.js";
 
 // Guardados no navegador para sobreviver a um F5 ou à aba fechada sem querer
 const STATE_KEY = "diario.recorderState";
@@ -295,10 +296,20 @@ async function loadDay(day) {
 
 async function init() {
   try {
-    config = await api.config();
+    config = await startPage(); // no modo online, sem login vai para a tela de entrar
   } catch {
     showMessage("Servidor fora do ar. Rode o uvicorn e recarregue a página.", "error");
     return;
+  }
+
+  // Downloads passam pelo JavaScript para levar o token de login junto
+  for (const id of ["export-day", "export-week"]) {
+    $(id).addEventListener("click", (event) => {
+      event.preventDefault();
+      download($(id).getAttribute("href")).catch(() =>
+        showMessage("Não foi possível baixar a transcrição.", "error"),
+      );
+    });
   }
 
   // Padrão: mais recentes primeiro. A escolha fica salva no navegador.
