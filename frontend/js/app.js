@@ -3,7 +3,7 @@
 import { InactivityWatcher, requestNotificationPermission, shortText } from "./alerts.js";
 import { api, download, flushOutbox, outboxSize, saveEntry } from "./api.js";
 import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
-import { Recorder } from "./recorder.js";
+import { Recorder, silentSpeechBrowser } from "./recorder.js";
 import { getOwnKey } from "./ownkey.js";
 import { nowIn, routineStatus } from "./routine.js";
 import { startPage } from "./session.js";
@@ -382,6 +382,19 @@ async function init() {
     renderState("error");
     $("btn-start").disabled = true;
     showMessage("Este navegador não tem reconhecimento de voz. Use o Google Chrome.", "error");
+    return;
+  }
+
+  const silentBrowser = silentSpeechBrowser();
+  if (silentBrowser) {
+    renderState("error");
+    $("btn-start").disabled = true;
+    showMessage(
+      `O ${silentBrowser} liga o microfone, mas não transcreve a voz. Para gravar, abra o app ` +
+        "no Google Chrome ou no Microsoft Edge. Aqui você ainda pode digitar anotações, " +
+        "revisar e baixar o diário.",
+      "error",
+    );
     return;
   }
 
