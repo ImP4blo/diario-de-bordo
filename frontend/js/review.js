@@ -5,7 +5,7 @@
 
 import { api, download } from "./api.js";
 import { formatDayLabel } from "./day.js";
-import { AI_STUDIO_URL, PRIVACY_NOTE, STEPS_HTML, saveOwnKey } from "./ownkey.js";
+import { AI_STUDIO_URL, getOwnKey, PRIVACY_NOTE, STEPS_HTML, saveOwnKey } from "./ownkey.js";
 import { startPage } from "./session.js";
 
 const NO_RECORD = "Sem registro";
@@ -26,7 +26,10 @@ function showMessage(text, kind = "info") {
 
 function setDirty(value) {
   dirty = value;
-  $("btn-save").disabled = !value;
+  // Dá para salvar se houve edição OU se algum dia ainda é rascunho da IA:
+  // salvar é o que marca como "Revisado", mesmo sem mudar nada
+  const hasDraft = document.querySelector('.review-day__status[data-status="draft"]');
+  $("btn-save").disabled = !(value || hasDraft);
   if (value) showMessage("Alterações não salvas.", "warn");
 }
 
@@ -100,7 +103,10 @@ async function generate() {
   try {
     const days = await api.generateDiary(start, end);
     render(days);
-    showMessage(`Pronto! ${days.length} dia(s) gerado(s). Revise e clique em Salvar revisão.`);
+    showMessage(
+      `Pronto! ${days.length} dia(s) gerado(s). Revise e clique em Salvar revisão.` +
+        (await usageText()),
+    );
   } catch (err) {
     if (err.code === "quota_exhausted") {
       showMessage("");
@@ -110,6 +116,17 @@ async function generate() {
     showMessage(err.messages?.join(" · ") ?? "Não foi possível gerar o diário.", "error");
   } finally {
     $("btn-generate").disabled = false;
+  }
+}
+
+/** " Você ainda tem 2 de 3 hoje." (só online e sem chave própria) */
+async function usageText() {
+  if (getOwnKey()) return " Usando a sua chave, sem limite.";
+  try {
+    const usage = await api.usage();
+    return usage.enabled ? ` Você ainda tem ${usage.remaining} de ${usage.limit} hoje.` : "";
+  } catch {
+    return "";
   }
 }
 
