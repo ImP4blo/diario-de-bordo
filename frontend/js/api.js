@@ -9,6 +9,12 @@ import { getOwnKey } from "./ownkey.js";
 
 const OUTBOX_KEY = "diario.outbox";
 
+// Endereço da API (definido em config.js). Vazio = o mesmo endereço do site.
+const API_BASE = (window.DIARIO_API_URL ?? "").replace(/\/$/, "");
+
+/** "/api/x" -> "https://api.../api/x" quando a API fica em outro endereço. */
+export const apiUrl = (path) => `${API_BASE}${path}`;
+
 class ApiError extends Error {
   constructor(status, body) {
     super(`HTTP ${status}: ${body}`);
@@ -49,7 +55,7 @@ async function headers(body, extra = {}) {
 }
 
 async function send(path, { method = "GET", body, extraHeaders } = {}) {
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     method,
     // keepalive: a requisição termina mesmo se a aba for fechada no meio dela.
     // Só para salvar falas (pequenas e urgentes); ele tem limite de tamanho.

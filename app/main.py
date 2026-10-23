@@ -4,8 +4,9 @@ O FastAPI faz duas coisas aqui:
 1. expõe a API em /api/... (o frontend conversa com o backend só por ela);
 2. serve os arquivos estáticos do frontend (HTML/CSS/JS) na raiz "/".
 
-Manter o frontend separado da API desde já é o que permite, na Etapa 2,
-hospedar os dois em lugares diferentes sem reescrever nada.
+No modo local, os dois saem do mesmo endereço (localhost:8000). Online, o site
+fica no Render Static Site e a API no Render Web Service: endereços diferentes,
+por isso o CORS logo abaixo.
 """
 
 import mimetypes
@@ -13,9 +14,10 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.config import BASE_DIR
+from app.config import BASE_DIR, get_settings
 from app.db import init_db
 from app.routers import config, diary, entries, export, me, routine
 
@@ -35,6 +37,16 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Diário de Bordo", version="0.1.0", lifespan=lifespan)
+
+# CORS: o navegador só deixa o site oficial chamar a API (lista vinda do ambiente)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().cors_origins,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-User-AI-Key"],
+    # Sem isto, o site não consegue ler o nome do arquivo nos downloads
+    expose_headers=["Content-Disposition"],
+)
 app.include_router(config.router)
 app.include_router(entries.router)
 app.include_router(export.router)

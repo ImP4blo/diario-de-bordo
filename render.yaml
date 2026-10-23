@@ -1,0 +1,86 @@
+# Infraestrutura do Diário de Bordo no Render ("Blueprint").
+#
+# Dois serviços, ambos no plano gratuito e com deploy automático a cada merge na main:
+#   1. diario-de-bordo-api -> a API em Python (dorme após ~15 min sem uso)
+#   2. diario-de-bordo     -> o site estático (não dorme; mostra "acordando o servidor")
+#
+# Valores com "sync: false" são pedidos no painel do Render na criação: segredos
+# (senha do banco, chave do Groq) nunca ficam neste arquivo, que é público no GitHub.
+
+services:
+  - type: web
+    name: diario-de-bordo-api
+    runtime: python
+    plan: free
+    region: virginia # perto do banco do Supabase (us-east-1)
+    branch: main
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    startCommand: .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_MODE
+        value: public
+      - key: TIMEZONE
+        value: America/Sao_Paulo
+      - key: DAILY_REFINEMENTS_PER_USER
+        value: "3"
+      - key: DAILY_REFINEMENTS_TOTAL
+        value: "100"
+      # Endereço do site, para o CORS liberar só ele (preenchido pelo próprio Render)
+      - key: FRONTEND_HOST
+        fromService:
+          type: web
+          name: diario-de-bordo
+          property: host
+      # Pedidos no painel (sync: false)
+      - key: DATABASE_URL # Session pooler do Supabase, com a senha
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+
+  - type: web
+    name: diario-de-bordo
+    runtime: static
+    branch: main
+    # Escreve no config.js o endereço da API (que o Render só conhece na criação)
+    buildCommand: echo "window.DIARIO_API_URL = \"https://$API_HOST\";" > frontend/config.js
+    staticPublishPath: frontend
+    envVars:
+      - key: API_HOST
+        fromService:
+          type: web
+          name: diario-de-bordo-api
+          property: host
+    headers:
+      # CSP: o navegador só executa e só conversa com o que está nesta lista.
+      # Protege a chave de IA guardada no navegador contra scripts injetados.
+      - path: /*
+        name: Content-Security-Policy
+        value: >-
+          default-src 'self';
+          script-src 'self' https://cdn.jsdelivr.net;
+          style-src 'self';
+          img-src 'self' data: blob: https://*.googleusercontent.com;
+          connect-src 'self' https://*.onrender.com https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net;
+          worker-src 'self';
+          manifest-src 'self';
+          object-src 'none';
+          base-uri 'self';
+          form-action 'self';
+          frame-ancestors 'none'
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: microphone=(self), camera=(), geolocation=()
+      - path: /*
+        name: X-Frame-Options
+        value: DENY

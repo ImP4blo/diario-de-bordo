@@ -1191,3 +1191,71 @@ body {
     animation: none;
   }
 }
+
+/* --- "Acordando o servidor..." --- */
+
+.wake {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(6px);
+  animation: fade-in 0.3s ease both;
+}
+
+.wake__card {
+  width: min(100%, 420px);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
+}
+
+.wake__title {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.wake__text {
+  margin: 0;
+  color: var(--muted);
+}
+
+.wake__timer {
+  margin: 0.75rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.wake__spinner {
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wake,
+  .wake__spinner {
+    animation: none;
+  }
+}

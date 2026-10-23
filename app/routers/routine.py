@@ -4,14 +4,14 @@ from fastapi import APIRouter
 
 from app.deps import SessionDep, SettingsDep, UserIdDep
 from app.schemas import RoutineData
-from app.services.routine import get_routine, save_routine
+from app.services.routine import get_routine, save_routine, seed_file
 
 router = APIRouter(prefix="/api/routine", tags=["routine"])
 
 
 @router.get("", response_model=RoutineData)
 def read_routine(user_id: UserIdDep, session: SessionDep, settings: SettingsDep) -> RoutineData:
-    return get_routine(session, user_id, settings.routine_file)
+    return get_routine(session, user_id, seed_file(settings))
 
 
 @router.put("", response_model=RoutineData)

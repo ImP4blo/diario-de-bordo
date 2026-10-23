@@ -11,7 +11,7 @@ from pathlib import Path
 
 from sqlmodel import Session, delete, select
 
-from app.config import BASE_DIR
+from app.config import BASE_DIR, Settings
 from app.models import RoutineBlock, WorkSchedule
 from app.schemas import RoutineBlockData, RoutineData
 
@@ -37,15 +37,26 @@ def load_routine_file(path: Path) -> RoutineData:
     )
 
 
-def initial_routine(routine_file: Path) -> RoutineData:
+def seed_file(settings: Settings) -> Path | None:
+    """Arquivo que dá origem à rotina de quem chega pela primeira vez.
+
+    Online (public) não há arquivo de ninguém: cada pessoa começa com o expediente
+    padrão, sem blocos, e monta a própria rotina nos Ajustes.
+    """
+    return settings.routine_file if settings.app_mode == "local" else None
+
+
+def initial_routine(routine_file: Path | None) -> RoutineData:
     """Primeiro arquivo que existir: o da pessoa, o de exemplo ou o padrão embutido."""
+    if routine_file is None:
+        return DEFAULT_ROUTINE
     for path in (routine_file, EXAMPLE_FILE):
         if path.is_file():
             return load_routine_file(path)
     return DEFAULT_ROUTINE
 
 
-def get_routine(session: Session, user_id: str, routine_file: Path) -> RoutineData:
+def get_routine(session: Session, user_id: str, routine_file: Path | None) -> RoutineData:
     schedule = session.get(WorkSchedule, user_id)
     if schedule is None:
         # Primeira vez: carrega do arquivo e grava no banco

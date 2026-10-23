@@ -110,3 +110,13 @@ def test_exportacao_intercala_a_rotina_nos_dias_uteis(client, rotina_pessoal):
     assert segunda.index("08:30–08:45 [Rotina] Daily") < segunda.index("09:00 [Fala]")
     assert segunda.index("09:00 [Fala]") < segunda.index("10:00–10:15 [Rotina] Café")
     assert "[Rotina]" not in sabado
+
+
+def test_online_cada_pessoa_comeca_com_rotina_generica(client):
+    from app.deps import get_current_user
+    from app.services.auth import CurrentUser
+
+    app.dependency_overrides[get_settings] = lambda: Settings(_env_file=None, app_mode="public")
+    app.dependency_overrides[get_current_user] = lambda: CurrentUser(id="nova", name="Nova")
+    rotina = client.get("/api/routine").json()
+    assert rotina == {"work_start": "09:00", "work_end": "18:00", "blocks": []}

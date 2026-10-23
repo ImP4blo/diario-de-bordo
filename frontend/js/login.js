@@ -3,6 +3,7 @@
 import { api } from "./api.js";
 import { getAccessToken, initAuth, signInWithEmail, signInWithGoogle } from "./auth.js";
 import { initInstallButtons } from "./install.js";
+import { waitForServer } from "./wake.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -44,6 +45,7 @@ async function loginWithEmail(event) {
 
 async function init() {
   initInstallButtons();
+  await waitForServer();
   let config;
   try {
     config = await api.config();
