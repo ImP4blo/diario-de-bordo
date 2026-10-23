@@ -24,6 +24,18 @@ class Settings(BaseSettings):
     # Banco
     database_url: str = f"sqlite:///{BASE_DIR / 'data' / 'diario.db'}"
 
+    # Modo de uso:
+    #   local  = no seu PC, sem login (um usuário só, o LOCAL_USER_ID)
+    #   public = online, com login pelo Supabase (cada conta vê só o próprio diário)
+    app_mode: Literal["local", "public"] = "local"
+
+    # Supabase Auth (só no modo public). A publishable key é PÚBLICA por natureza:
+    # o navegador precisa dela para fazer o login. Segredo é a senha do banco.
+    supabase_url: str = ""
+    supabase_publishable_key: str = ""
+    # Só para projetos antigos do Supabase, que assinam tokens com segredo (HS256)
+    supabase_jwt_secret: SecretStr | None = None
+
     # Usuário e fuso
     local_user_id: str = "local"
     display_name: str = "Seu Nome"

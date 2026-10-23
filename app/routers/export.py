@@ -5,7 +5,7 @@ from datetime import date
 from fastapi import APIRouter, HTTPException, Response
 from sqlmodel import select
 
-from app.deps import SessionDep, SettingsDep, UserIdDep
+from app.deps import CurrentUserDep, SessionDep, SettingsDep
 from app.models import Entry
 from app.services.days import get_tz, today, week_bounds
 from app.services.routine import get_routine
@@ -22,7 +22,7 @@ MEDIA_TYPES = {
 
 @router.get("/transcript")
 def export_transcript(
-    user_id: UserIdDep,
+    user: CurrentUserDep,
     session: SessionDep,
     settings: SettingsDep,
     start: date | None = None,
@@ -39,11 +39,11 @@ def export_transcript(
 
     query = (
         select(Entry)
-        .where(Entry.user_id == user_id, Entry.local_date >= start, Entry.local_date <= end)
+        .where(Entry.user_id == user.id, Entry.local_date >= start, Entry.local_date <= end)
         .order_by(Entry.ts)
     )
-    routine = get_routine(session, user_id, settings.routine_file)
-    transcript = collect(session.exec(query), start, end, settings.display_name, get_tz(), routine)
+    routine = get_routine(session, user.id, settings.routine_file)
+    transcript = collect(session.exec(query), start, end, user.name, get_tz(), routine)
     content = render_docx(transcript) if fmt == "docx" else render_text(transcript, fmt)
 
     name = f"transcricao_{start}" + ("" if start == end else f"_a_{end}") + f".{fmt}"
