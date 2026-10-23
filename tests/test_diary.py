@@ -240,3 +240,43 @@ def test_resposta_completa_nao_chama_a_ia_de_novo():
     llm = FakeLLM(resposta(("10:00", "10:20", "Refinamento")))  # só UMA resposta disponível
     generate_day(llm, date(2026, 10, 26), linhas, None)
     assert len(llm.prompts) == 1
+
+
+# --- Word do diário (etapa 8) -------------------------------------------------
+
+
+def test_baixa_o_diario_em_word_no_formato_combinado(client, ia_falsa):
+    from io import BytesIO
+
+    from docx import Document
+
+    registrar(client, "2026-10-26T10:00:00-03:00", "Diário, refinamento com o PO")
+    client.post("/api/diary/generate?start=2026-10-26")
+
+    response = client.get("/api/diary/docx?start=2026-10-26&end=2026-10-30")
+    assert response.status_code == 200
+    disposition = response.headers["content-disposition"]
+    assert 'filename="diario-de-bordo_2026-10-26_a_2026-10-30.docx"' in disposition
+
+    doc = Document(BytesIO(response.content))
+    textos = [p.text for p in doc.paragraphs]
+    assert "Diário de Bordo" in textos
+    assert any("Período: 26/10/2026 a 30/10/2026" in t for t in textos)
+    assert "Segunda-feira, 26/10/2026" in textos
+
+    tabela = doc.tables[0]
+    assert [c.text for c in tabela.rows[0].cells] == ["Início", "Fim", "Atividade", "Descrição"]
+    linhas = [[c.text for c in row.cells] for row in tabela.rows[1:]]
+    assert ["10:00", "10:40", "Refinamento com o PO", ""] in linhas
+
+
+def test_word_de_um_dia_tem_nome_de_um_dia(client, ia_falsa):
+    registrar(client, "2026-10-26T10:00:00-03:00", "olá")
+    client.post("/api/diary/generate?start=2026-10-26")
+    response = client.get("/api/diary/docx?start=2026-10-26")
+    assert 'filename="diario-de-bordo_2026-10-26.docx"' in response.headers["content-disposition"]
+
+
+def test_word_sem_diario_gerado_avisa(client):
+    response = client.get("/api/diary/docx?start=2026-10-26")
+    assert response.status_code == 404

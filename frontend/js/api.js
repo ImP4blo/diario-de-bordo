@@ -50,6 +50,7 @@ export const api = {
   generateDiary: (start, end) =>
     request(`/api/diary/generate?start=${start}&end=${end}`, { method: "POST" }),
   saveDiary: (day, blocks) => request(`/api/diary/${day}`, { method: "PUT", body: { blocks } }),
+  diaryDocxUrl: (start, end) => `/api/diary/docx?start=${start}&end=${end}`,
 };
 
 // --- Caixa de saída -------------------------------------------------------
