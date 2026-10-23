@@ -152,7 +152,8 @@ def test_chave_curta_demais_e_recusada():
     [
         (400, f"API key not valid: {CHAVE}", "chave do Gemini é inválida"),
         (429, "Quota exceeded", "limite gratuito"),
-        (500, f"falha interna ao usar {CHAVE}", "[chave oculta]"),
+        (404, f"modelo não encontrado para {CHAVE}", "[chave oculta]"),
+        (503, "This model is currently experiencing high demand", "sobrecarregado"),
     ],
 )
 def test_erros_do_gemini_nunca_mostram_a_chave(codigo, mensagem_do_google, esperado):
@@ -169,3 +170,36 @@ def test_erros_do_gemini_nunca_mostram_a_chave(codigo, mensagem_do_google, esper
     assert esperado in str(capturado.value)
     assert CHAVE not in str(capturado.value)
     assert capturado.value.__cause__ is None  # o erro original (com a chave) foi descartado
+
+
+def test_modelo_sobrecarregado_usa_o_plano_b():
+    from types import SimpleNamespace
+
+    from app.llm.gemini_provider import FALLBACK_MODEL
+
+    provedor = GeminiProvider(CHAVE)
+    modelos_usados = []
+
+    def responde(model, **_):
+        modelos_usados.append(model)
+        if model != FALLBACK_MODEL:
+            raise errors.APIError(503, {"error": {"code": 503, "message": "high demand"}})
+        return SimpleNamespace(text='{"blocos": []}')
+
+    provedor.client.models.generate_content = responde
+    assert provedor.generate_json("sistema", "prompt", {}) == '{"blocos": []}'
+    assert modelos_usados == ["gemini-flash-latest", FALLBACK_MODEL]
+
+
+def test_modelo_escolhido_no_env_nao_e_trocado():
+    provedor = GeminiProvider(CHAVE, model="gemini-modelo-especifico")
+    modelos_usados = []
+
+    def sobrecarregado(model, **_):
+        modelos_usados.append(model)
+        raise errors.APIError(503, {"error": {"code": 503, "message": "high demand"}})
+
+    provedor.client.models.generate_content = sobrecarregado
+    with pytest.raises(LLMError, match="sobrecarregado"):
+        provedor.generate_json("sistema", "prompt", {})
+    assert modelos_usados == ["gemini-modelo-especifico"]
