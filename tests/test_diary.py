@@ -8,7 +8,7 @@ import pytest
 from app.config import Settings, get_settings
 from app.llm.base import LLMError
 from app.main import app
-from app.routers.diary import get_llm
+from app.routers.diary import LLMChoice, get_llm
 from app.schemas import DiaryBlock, RoutineBlockData, RoutineData
 from app.services.diary import (
     NO_RECORD,
@@ -124,7 +124,7 @@ def test_lacunas_do_expediente_viram_sem_registro_ate_o_ultimo_registro():
 @pytest.fixture
 def ia_falsa():
     llm = FakeLLM(resposta(("09:15", "09:30", "Daily"), ("10:00", "10:40", "Refinamento com o PO")))
-    app.dependency_overrides[get_llm] = lambda: llm
+    app.dependency_overrides[get_llm] = lambda: LLMChoice(llm, own_key=False)
     return llm
 
 
@@ -184,7 +184,7 @@ def test_falha_da_ia_vira_erro_502_com_mensagem(client):
         def generate_json(self, system, prompt, schema):
             raise LLMError("Limite do plano gratuito do Groq atingido.")
 
-    app.dependency_overrides[get_llm] = lambda: IAForaDoAr()
+    app.dependency_overrides[get_llm] = lambda: LLMChoice(IAForaDoAr(), own_key=False)
     registrar(client, "2026-10-26T10:00:00-03:00", "olá")
 
     response = client.post("/api/diary/generate?start=2026-10-26")

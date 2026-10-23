@@ -9,6 +9,7 @@ dependencies = [
     "alembic>=1.20.1",
     "anthropic>=2.1.0",
     "fastapi>=0.161.0",
+    "google-genai>=2.33.0",
     "groq>=1.7.0",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.16.1",
@@ -39,3 +40,9 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Modo estrito: qualquer aviso vira erro (pega problemas cedo). Exceção para um
+# aviso de dentro da biblioteca do Google no Python 3.14, que não é nosso.
+filterwarnings = [
+    "error",
+    "ignore:'_UnionGenericAlias' is deprecated:DeprecationWarning",
+]

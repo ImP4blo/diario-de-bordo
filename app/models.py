@@ -68,6 +68,18 @@ class GeneratedDiary(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=utcnow, sa_type=UTC_DATETIME)
 
 
+class UsageCounter(SQLModel, table=True):
+    """Quantos refinamentos com a IA do app cada um usou em cada dia.
+
+    subject: "user:<id>" para cada pessoa ou "total" para o app inteiro.
+    Na V2 (planos), basta criar outros subjects ou outros limites.
+    """
+
+    subject: str = Field(primary_key=True)
+    day: date = Field(primary_key=True)
+    count: int = 0
+
+
 class WorkSchedule(SQLModel, table=True):
     """Expediente da pessoa. Ter esta linha também indica que a rotina já foi
     carregada do arquivo de configuração (assim, apagar todos os blocos não faz
