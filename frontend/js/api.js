@@ -5,6 +5,7 @@
 // Assim nada se perde. O horário vai junto, então a frase entra no lugar certo.
 
 import { getAccessToken, goToLogin } from "./auth.js";
+import { getOwnKey } from "./ownkey.js";
 
 const OUTBOX_KEY = "diario.outbox";
 
@@ -15,33 +16,45 @@ class ApiError extends Error {
     this.body = body;
   }
 
-  /** Mensagens de validação do FastAPI ("detail"), prontas para mostrar na tela. */
-  get messages() {
+  get detail() {
     try {
-      const { detail } = JSON.parse(this.body);
-      if (typeof detail === "string") return [detail];
-      return detail.map((error) => error.msg.replace(/^Value error, /, ""));
+      return JSON.parse(this.body).detail;
     } catch {
-      return [this.message];
+      return null;
     }
+  }
+
+  /** Código do erro, quando a API manda um (ex.: "quota_exhausted"). */
+  get code() {
+    return this.detail?.code ?? null;
+  }
+
+  /** Mensagens de erro do FastAPI ("detail"), prontas para mostrar na tela. */
+  get messages() {
+    const detail = this.detail;
+    if (typeof detail === "string") return [detail];
+    if (detail?.message) return [detail.message];
+    if (Array.isArray(detail)) return detail.map((e) => e.msg.replace(/^Value error, /, ""));
+    return [this.message];
   }
 }
 
 /** Cabeçalhos de toda requisição: o "crachá" de login (modo public) e o tipo do corpo. */
-async function headers(body) {
-  const result = {};
+async function headers(body, extra = {}) {
+  const result = { ...extra };
   if (body) result["Content-Type"] = "application/json";
   const token = await getAccessToken();
   if (token) result.Authorization = `Bearer ${token}`;
   return result;
 }
 
-async function send(path, { method = "GET", body } = {}) {
+async function send(path, { method = "GET", body, extraHeaders } = {}) {
   const response = await fetch(path, {
     method,
-    // keepalive: a requisição termina mesmo se a aba for fechada no meio dela
-    keepalive: method !== "GET",
-    headers: await headers(body),
+    // keepalive: a requisição termina mesmo se a aba for fechada no meio dela.
+    // Só para salvar falas (pequenas e urgentes); ele tem limite de tamanho.
+    keepalive: method === "POST" && path.startsWith("/api/entries"),
+    headers: await headers(body, extraHeaders),
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!response.ok) {
@@ -79,8 +92,15 @@ export const api = {
   routine: () => request("/api/routine"),
   saveRoutine: (data) => request("/api/routine", { method: "PUT", body: data }),
   diary: (start, end) => request(`/api/diary?start=${start}&end=${end}`),
-  generateDiary: (start, end) =>
-    request(`/api/diary/generate?start=${start}&end=${end}`, { method: "POST" }),
+  // Com chave própria salva, ela vai junto (só nesta chamada) e não há limite diário
+  generateDiary: (start, end) => {
+    const ownKey = getOwnKey();
+    return request(`/api/diary/generate?start=${start}&end=${end}`, {
+      method: "POST",
+      extraHeaders: ownKey ? { "X-User-AI-Key": ownKey } : {},
+    });
+  },
+  usage: () => request("/api/diary/usage"),
   saveDiary: (day, blocks) => request(`/api/diary/${day}`, { method: "PUT", body: { blocks } }),
   diaryDocxUrl: (start, end) => `/api/diary/docx?start=${start}&end=${end}`,
 };

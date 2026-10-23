@@ -5,6 +5,7 @@
 
 import { api, download } from "./api.js";
 import { formatDayLabel } from "./day.js";
+import { AI_STUDIO_URL, getOwnKey, PRIVACY_NOTE, STEPS_HTML, saveOwnKey } from "./ownkey.js";
 import { startPage } from "./session.js";
 
 const NO_RECORD = "Sem registro";
@@ -25,7 +26,10 @@ function showMessage(text, kind = "info") {
 
 function setDirty(value) {
   dirty = value;
-  $("btn-save").disabled = !value;
+  // Dá para salvar se houve edição OU se algum dia ainda é rascunho da IA:
+  // salvar é o que marca como "Revisado", mesmo sem mudar nada
+  const hasDraft = document.querySelector('.review-day__status[data-status="draft"]');
+  $("btn-save").disabled = !(value || hasDraft);
   if (value) showMessage("Alterações não salvas.", "warn");
 }
 
@@ -89,22 +93,142 @@ function readDay(section) {
 
 // --- Ações --------------------------------------------------------------------
 
+// --- Barra de progresso (estimada) ---------------------------------------------
+// O servidor só responde no fim, então não existe porcentagem "real". A barra anda
+// rápido no começo, desacelera perto de 95% e só completa quando a resposta chega.
+// O cronômetro e o brilho animado mostram que não travou.
+
+const SECONDS_PER_DAY = 10; // tempo típico de um dia com a IA
+
+function workdaysInPeriod() {
+  let count = 0;
+  for (let d = new Date(`${start}T12:00:00Z`); d <= new Date(`${end}T12:00:00Z`); ) {
+    if (d.getUTCDay() % 6 !== 0) count++; // 0 = domingo, 6 = sábado
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return Math.max(count, 1);
+}
+
+function startProgress() {
+  const expected = workdaysInPeriod() * SECONDS_PER_DAY;
+  const began = Date.now();
+  const update = (percent, seconds) => {
+    $("progress-fill").style.width = `${percent}%`;
+    $("progress").setAttribute("aria-valuenow", String(percent));
+    $("progress-label").textContent = `${percent}% · ${seconds}s`;
+  };
+  $("progress").hidden = false;
+  update(0, 0);
+
+  const timer = setInterval(() => {
+    const seconds = (Date.now() - began) / 1000;
+    // Curva que se aproxima de 95% sem nunca chegar: no tempo esperado, ~85%
+    const percent = Math.round(95 * (1 - Math.exp((-2 * seconds) / expected)));
+    update(percent, Math.floor(seconds));
+  }, 250);
+
+  return function finish() {
+    clearInterval(timer);
+    update(100, Math.floor((Date.now() - began) / 1000));
+    setTimeout(() => ($("progress").hidden = true), 700);
+  };
+}
+
 async function generate() {
   const hasReviewed = document.querySelector('[data-status="reviewed"]');
   if ((dirty || hasReviewed) && !confirm("Gerar de novo substitui as suas edições. Continuar?")) {
     return;
   }
   $("btn-generate").disabled = true;
-  showMessage("🤖 Gerando com IA... pode levar até 1 minuto por dia.");
+  showMessage("🤖 Gerando com IA... a barra completa quando a resposta chegar.");
+  const finishProgress = startProgress();
   try {
     const days = await api.generateDiary(start, end);
     render(days);
-    showMessage(`Pronto! ${days.length} dia(s) gerado(s). Revise e clique em Salvar revisão.`);
+    showMessage(
+      `Pronto! ${days.length} dia(s) gerado(s). Revise e clique em Salvar revisão.` +
+        (await usageText()),
+    );
   } catch (err) {
+    if (err.code === "quota_exhausted") {
+      showMessage("");
+      openQuotaDialog(err.messages[0]);
+      return;
+    }
     showMessage(err.messages?.join(" · ") ?? "Não foi possível gerar o diário.", "error");
   } finally {
+    finishProgress();
     $("btn-generate").disabled = false;
   }
+}
+
+/** " Você ainda tem 2 de 3 hoje." (só online e sem chave própria) */
+async function usageText() {
+  if (getOwnKey()) return " Usando a sua chave, sem limite.";
+  try {
+    const usage = await api.usage();
+    return usage.enabled ? ` Você ainda tem ${usage.remaining} de ${usage.limit} hoje.` : "";
+  } catch {
+    return "";
+  }
+}
+
+// --- Limite diário atingido ---------------------------------------------------
+// A pessoa nunca fica travada: ou usa a própria chave, ou segue só com a transcrição.
+
+function openQuotaDialog(message) {
+  const fullStop = message === "Você usou seus refinamentos de hoje.";
+  $("quota-message").textContent = fullStop
+    ? "Para continuar gerando hoje, escolha uma opção:"
+    : message;
+  $("quota-key-steps").hidden = true;
+  $("quota-transcript-info").hidden = true;
+  $("quota-dialog").showModal();
+}
+
+function showOwnKeySteps() {
+  window.open(AI_STUDIO_URL, "_blank", "noopener"); // abre o AI Studio em outra aba
+  $("quota-steps-list").innerHTML = STEPS_HTML;
+  $("quota-privacy").textContent = `⚠️ ${PRIVACY_NOTE}`;
+  $("quota-transcript-info").hidden = true;
+  $("quota-key-steps").hidden = false;
+  $("quota-key-input").focus();
+}
+
+async function saveKeyAndGenerate(event) {
+  event.preventDefault();
+  try {
+    saveOwnKey($("quota-key-input").value);
+  } catch (err) {
+    $("quota-key-error").textContent = err.message;
+    $("quota-key-error").hidden = false;
+    return;
+  }
+  $("quota-key-input").value = ""; // não deixa a chave visível na tela
+  $("quota-key-error").hidden = true;
+  $("quota-dialog").close();
+  await generate();
+}
+
+function showTranscriptOption() {
+  $("quota-key-steps").hidden = true;
+  $("quota-transcript-info").hidden = false;
+}
+
+async function downloadTranscript() {
+  try {
+    await download(`/api/export/transcript?start=${start}&end=${end}&fmt=txt`);
+  } catch {
+    showMessage("Não foi possível baixar a transcrição.", "error");
+  }
+}
+
+function initQuotaDialog() {
+  $("quota-own-key").addEventListener("click", showOwnKeySteps);
+  $("quota-transcript").addEventListener("click", showTranscriptOption);
+  $("quota-key-form").addEventListener("submit", saveKeyAndGenerate);
+  $("quota-download-txt").addEventListener("click", downloadTranscript);
+  $("quota-close").addEventListener("click", () => $("quota-dialog").close());
 }
 
 /** Salva todos os dias da tela. Devolve true se deu certo. */
@@ -156,6 +280,7 @@ async function init() {
     return;
   }
 
+  initQuotaDialog();
   $("btn-generate").addEventListener("click", generate);
   $("btn-save").addEventListener("click", save);
   $("btn-word").addEventListener("click", downloadWord);

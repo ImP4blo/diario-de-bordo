@@ -55,6 +55,13 @@ class Settings(BaseSettings):
     llm_model: str = ""
     groq_api_key: SecretStr | None = None
     anthropic_api_key: SecretStr | None = None
+    # Modelo usado com a chave PRÓPRIA da pessoa (Google AI Studio)
+    gemini_model: str = ""
+
+    # Limites diários da IA paga por você (só no modo public; 1 refinamento = 1 dia gerado).
+    # Quem usar a própria chave não entra na conta.
+    daily_refinements_per_user: int = Field(default=3, ge=0)
+    daily_refinements_total: int = Field(default=100, ge=0)
 
 
 @lru_cache

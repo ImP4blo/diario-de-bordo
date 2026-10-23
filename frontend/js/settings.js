@@ -1,6 +1,14 @@
 // Tela de Ajustes: edita o expediente e os blocos da rotina fixa.
 
 import { api } from "./api.js";
+import {
+  getOwnKey,
+  maskKey,
+  PRIVACY_NOTE,
+  removeOwnKey,
+  STEPS_HTML,
+  saveOwnKey,
+} from "./ownkey.js";
 import { startPage } from "./session.js";
 
 const $ = (id) => document.getElementById(id);
@@ -69,7 +77,47 @@ async function save(event) {
   }
 }
 
+// --- Chave própria de IA ------------------------------------------------------
+
+function renderOwnKey() {
+  const key = getOwnKey();
+  $("own-key-saved").hidden = !key;
+  $("own-key-new").hidden = Boolean(key);
+  $("own-key-masked").textContent = maskKey(key); // nunca a chave inteira
+}
+
+function keyMessage(text, kind = "info") {
+  $("own-key-message").textContent = text;
+  $("own-key-message").dataset.kind = kind;
+  $("own-key-message").hidden = !text;
+}
+
+function initOwnKey() {
+  $("own-key-steps").innerHTML = STEPS_HTML;
+  $("own-key-privacy").textContent = `⚠️ ${PRIVACY_NOTE}`;
+  renderOwnKey();
+
+  $("own-key-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    try {
+      saveOwnKey($("own-key-input").value);
+      $("own-key-input").value = "";
+      keyMessage("Chave salva! Os próximos diários usam a sua chave, sem limite.");
+      renderOwnKey();
+    } catch (err) {
+      keyMessage(err.message, "error");
+    }
+  });
+  $("own-key-remove").addEventListener("click", () => {
+    if (!confirm("Remover a sua chave deste navegador?")) return;
+    removeOwnKey();
+    keyMessage("Chave removida. O app volta a usar o limite diário.");
+    renderOwnKey();
+  });
+}
+
 async function init() {
+  initOwnKey();
   $("add-block").addEventListener("click", () =>
     addBlock().querySelector(".block__start").focus(),
   );

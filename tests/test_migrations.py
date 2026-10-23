@@ -34,7 +34,9 @@ def test_migracoes_batem_com_os_modelos(tmp_path):
 
 def test_banco_antigo_sem_alembic_e_aproveitado_sem_perder_dados(tmp_path):
     engine = _engine(tmp_path, "antigo.db")
-    SQLModel.metadata.create_all(engine)  # como o app criava antes do Alembic
+    # Como o app criava antes do Alembic: só as tabelas que existiam naquela época
+    antigas = [SQLModel.metadata.tables[nome] for nome in TABELAS]
+    SQLModel.metadata.create_all(engine, tables=antigas)
     with engine.begin() as connection:
         connection.execute(
             text(
