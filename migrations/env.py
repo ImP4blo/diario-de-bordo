@@ -12,6 +12,7 @@ from sqlmodel import SQLModel
 
 import app.models  # noqa: F401  (registra as tabelas no SQLModel.metadata)
 from app.config import get_settings
+from app.db import normalize_url
 
 config = context.config
 if config.config_file_name is not None and config.attributes.get("configure_logger", True):
@@ -22,7 +23,7 @@ target_metadata = SQLModel.metadata
 
 def _url() -> str:
     # Quem chama pode passar outro endereço (ex.: os testes); senão, o do .env
-    return config.get_main_option("sqlalchemy.url") or get_settings().database_url
+    return config.get_main_option("sqlalchemy.url") or normalize_url(get_settings().database_url)
 
 
 def run_migrations_offline() -> None:

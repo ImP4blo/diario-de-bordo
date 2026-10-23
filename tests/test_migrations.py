@@ -56,3 +56,12 @@ def test_rodar_duas_vezes_nao_quebra(tmp_path):
     run_migrations(engine)
     run_migrations(engine)  # é o que acontece toda vez que o servidor reinicia
     engine.dispose()
+
+
+def test_endereco_do_supabase_ganha_o_driver_certo():
+    from app.db import normalize_url
+
+    assert normalize_url("postgresql://u:s@host:5432/db") == "postgresql+psycopg://u:s@host:5432/db"
+    assert normalize_url("postgres://u:s@host/db") == "postgresql+psycopg://u:s@host/db"
+    assert normalize_url("postgresql+psycopg://u:s@h/db") == "postgresql+psycopg://u:s@h/db"
+    assert normalize_url("sqlite:///./data/diario.db") == "sqlite:///./data/diario.db"

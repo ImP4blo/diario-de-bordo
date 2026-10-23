@@ -23,7 +23,17 @@ ALEMBIC_INI = BASE_DIR / "alembic.ini"
 # Primeira migração: bancos criados antes do Alembic já têm exatamente estas tabelas
 INITIAL_REVISION = "a4c699fcccff"
 
-_url = make_url(get_settings().database_url)
+
+def normalize_url(url: str) -> str:
+    """Supabase e Render entregam "postgresql://..." (ou "postgres://..."), sem dizer o
+    driver. Completamos com o psycopg (versão 3), que é o que está instalado."""
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url.removeprefix(prefix)
+    return url
+
+
+_url = make_url(normalize_url(get_settings().database_url))
 _is_sqlite = _url.get_backend_name() == "sqlite"
 
 engine = create_engine(
