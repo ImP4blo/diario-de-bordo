@@ -1169,13 +1169,32 @@ body {
   color: var(--accent);
 }
 
-.footer__privacy {
-  margin-top: 0.75rem;
-  font-size: 0.8rem;
+/* Rodapé com respiro: cada grupo (baixar app, créditos, links, privacidade) na sua linha */
+.footer {
+  padding-top: 1rem;
 }
 
-.footer__privacy a {
-  color: var(--muted);
+.footer > p:not(.footer__privacy) {
+  margin: 1.25rem 0 0.6rem;
+}
+
+/* ".footer" na frente: precisa vencer a regra ".footer p", que é mais específica */
+.footer .footer__privacy {
+  display: flex;
+  justify-content: center;
+  margin: 1.25rem 0 0;
+}
+
+/* Chip discreto (sem borda) que ganha um tom verde de "segurança" no hover */
+.link-chip--subtle {
+  border-color: transparent;
+}
+
+.link-chip--subtle:hover,
+.link-chip--subtle:focus-visible {
+  background: var(--green);
+  border-color: var(--green);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--green) 35%, transparent);
 }
 
 /* --- Barra de progresso da geração --- */
