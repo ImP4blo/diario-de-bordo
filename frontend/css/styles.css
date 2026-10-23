@@ -137,8 +137,16 @@ body {
 /* Quem pediu menos movimento no sistema operacional não vê animação */
 @media (prefers-reduced-motion: reduce) {
   .link-chip,
-  .link-chip svg {
+  .link-chip svg,
+  .install-chip,
+  .install-chip svg {
     transition: none;
+  }
+
+  .login__hero,
+  .login__card,
+  .login__install {
+    animation: none;
   }
 
   .link-chip:hover,
@@ -507,6 +515,269 @@ body {
   margin: 0 0 0.5rem;
 }
 
+/* --- Tela de login --- */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 45%),
+    radial-gradient(circle at 85% 90%, color-mix(in srgb, var(--green) 20%, transparent), transparent 40%),
+    var(--bg);
+}
+
+.login {
+  flex: 1;
+  width: min(100%, 960px);
+  margin: 0 auto;
+  padding: 3rem 1rem 2rem;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  grid-template-areas:
+    "hero card"
+    "install card";
+  gap: 1.5rem 2.5rem;
+  align-items: center;
+}
+
+.login__hero {
+  grid-area: hero;
+  animation: rise 0.6s ease both;
+}
+
+.login__logo {
+  border-radius: 18px;
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.login__title {
+  margin: 1rem 0 0.5rem;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.login__tagline {
+  margin: 0 0 1.25rem;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.login__tagline strong {
+  color: var(--text);
+}
+
+.login__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.login__features li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 500;
+}
+
+.login__card {
+  grid-area: card;
+  display: grid;
+  gap: 1rem;
+  padding: 2rem;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 18%);
+  animation: rise 0.6s 0.1s ease both;
+}
+
+.login__card-title {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.btn--google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  color: #1f1f1f;
+  border-color: #dadce0;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.btn--google svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.btn--google:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 15%);
+}
+
+.login__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.login__divider::before,
+.login__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.login__email {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.login__privacy {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.login__install {
+  grid-area: install;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  animation: rise 0.6s 0.2s ease both;
+}
+
+.login__install .hint {
+  margin: 0;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (max-width: 760px) {
+  .login {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "hero"
+      "card"
+      "install";
+    padding-top: 2rem;
+    text-align: center;
+  }
+
+  .login__features {
+    justify-items: center;
+  }
+
+  .login__install {
+    justify-content: center;
+  }
+}
+
+/* --- "Baixar app" (Android / iPhone) --- */
+
+.install-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.install-chip svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  fill: currentColor;
+  transition: transform 0.3s ease;
+}
+
+.install-chip[data-install="android"]:hover,
+.install-chip[data-install="android"]:focus-visible {
+  color: #3ddc84; /* verde do Android */
+  border-color: #3ddc84;
+}
+
+.install-chip[data-install="ios"]:hover,
+.install-chip[data-install="ios"]:focus-visible {
+  border-color: var(--text);
+}
+
+.install-chip:hover,
+.install-chip:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgb(0 0 0 / 18%);
+}
+
+/* O ícone "pula" de leve ao passar o mouse */
+.install-chip:hover svg,
+.install-chip:focus-visible svg {
+  transform: scale(1.2) rotate(-6deg);
+}
+
+.install-group[hidden] {
+  display: none;
+}
+
+.install-steps {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* --- Quem está logado (cabeçalho) --- */
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+}
+
+.user-box[hidden] {
+  display: none;
+}
+
+.user-box__name {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.topbar__right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
 /* --- Ajustes --- */
 
 .settings__title {
@@ -708,4 +979,12 @@ body {
   .review-block {
     grid-template-columns: 1fr;
   }
+}
+
+.footer .install-group {
+  margin-bottom: 1rem;
+}
+
+.footer .install-group .hint {
+  margin: 0;
 }

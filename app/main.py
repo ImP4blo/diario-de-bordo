@@ -24,6 +24,7 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # No Windows, o tipo do .js vem do registro do sistema e às vezes está errado
 # ("text/plain"). Aí o Chrome se recusa a carregar os módulos JS. Forçamos o certo.
 mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 @asynccontextmanager

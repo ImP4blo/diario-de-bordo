@@ -3,8 +3,9 @@
 // O período vem da URL: review.html?start=2026-10-26&end=2026-10-30
 // (com &generate=1 a geração começa sozinha ao abrir).
 
-import { api } from "./api.js";
+import { api, download } from "./api.js";
 import { formatDayLabel } from "./day.js";
+import { startPage } from "./session.js";
 
 const NO_RECORD = "Sem registro";
 const STATUS_LABELS = { draft: "Rascunho da IA", reviewed: "Revisado ✔" };
@@ -133,7 +134,11 @@ async function save() {
 /** Baixa o Word. Se houver edição pendente, salva antes para não baixar versão velha. */
 async function downloadWord() {
   if (dirty && !(await save())) return;
-  location.href = api.diaryDocxUrl(start, end);
+  try {
+    await download(api.diaryDocxUrl(start, end));
+  } catch (err) {
+    showMessage(err.messages?.join(" · ") ?? "Não foi possível baixar o Word.", "error");
+  }
 }
 
 async function init() {
@@ -144,6 +149,12 @@ async function init() {
   }
   $("period").textContent = formatPeriod();
   document.title = `Revisão ${formatPeriod()} · Diário de Bordo`;
+  try {
+    await startPage();
+  } catch {
+    showMessage("Servidor fora do ar. Rode o uvicorn e recarregue a página.", "error");
+    return;
+  }
 
   $("btn-generate").addEventListener("click", generate);
   $("btn-save").addEventListener("click", save);
