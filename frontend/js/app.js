@@ -4,6 +4,7 @@ import { InactivityWatcher, requestNotificationPermission, shortText } from "./a
 import { api, download, flushOutbox, outboxSize, saveEntry } from "./api.js";
 import { addDays, DayView, formatDayLabel, todayIn, weekBounds } from "./day.js";
 import { Recorder } from "./recorder.js";
+import { getOwnKey } from "./ownkey.js";
 import { nowIn, routineStatus } from "./routine.js";
 import { startPage } from "./session.js";
 
@@ -171,6 +172,25 @@ async function retryOutbox() {
   const sent = await flushOutbox();
   updateOutboxNotice();
   if (sent > 0) loadDay(currentDay);
+}
+
+// --- Saldo de diários com IA (só online) ---------------------------------
+
+async function renderUsage() {
+  const el = $("usage-info");
+  if (getOwnKey()) {
+    el.textContent = "🔑 Sua chave: sem limite";
+    el.hidden = false;
+    return;
+  }
+  try {
+    const usage = await api.usage();
+    el.hidden = !usage.enabled; // no modo local não há limite para mostrar
+    el.textContent = `Hoje: ${usage.remaining} de ${usage.limit} restantes`;
+    el.dataset.empty = String(usage.remaining === 0);
+  } catch {
+    el.hidden = true;
+  }
 }
 
 // --- Rotina fixa ---------------------------------------------------------
@@ -348,6 +368,7 @@ async function init() {
   }
   renderRoutineNow();
   setInterval(renderRoutineNow, 30_000);
+  renderUsage();
 
   $("note-form").addEventListener("submit", submitNote);
   $("activity-end").addEventListener("click", endActivity);

@@ -5,6 +5,7 @@
 
 import { api, download } from "./api.js";
 import { formatDayLabel } from "./day.js";
+import { AI_STUDIO_URL, PRIVACY_NOTE, STEPS_HTML, saveOwnKey } from "./ownkey.js";
 import { startPage } from "./session.js";
 
 const NO_RECORD = "Sem registro";
@@ -101,10 +102,73 @@ async function generate() {
     render(days);
     showMessage(`Pronto! ${days.length} dia(s) gerado(s). Revise e clique em Salvar revisão.`);
   } catch (err) {
+    if (err.code === "quota_exhausted") {
+      showMessage("");
+      openQuotaDialog(err.messages[0]);
+      return;
+    }
     showMessage(err.messages?.join(" · ") ?? "Não foi possível gerar o diário.", "error");
   } finally {
     $("btn-generate").disabled = false;
   }
+}
+
+// --- Limite diário atingido ---------------------------------------------------
+// A pessoa nunca fica travada: ou usa a própria chave, ou segue só com a transcrição.
+
+function openQuotaDialog(message) {
+  const fullStop = message === "Você usou seus refinamentos de hoje.";
+  $("quota-message").textContent = fullStop
+    ? "Para continuar gerando hoje, escolha uma opção:"
+    : message;
+  $("quota-key-steps").hidden = true;
+  $("quota-transcript-info").hidden = true;
+  $("quota-dialog").showModal();
+}
+
+function showOwnKeySteps() {
+  window.open(AI_STUDIO_URL, "_blank", "noopener"); // abre o AI Studio em outra aba
+  $("quota-steps-list").innerHTML = STEPS_HTML;
+  $("quota-privacy").textContent = `⚠️ ${PRIVACY_NOTE}`;
+  $("quota-transcript-info").hidden = true;
+  $("quota-key-steps").hidden = false;
+  $("quota-key-input").focus();
+}
+
+async function saveKeyAndGenerate(event) {
+  event.preventDefault();
+  try {
+    saveOwnKey($("quota-key-input").value);
+  } catch (err) {
+    $("quota-key-error").textContent = err.message;
+    $("quota-key-error").hidden = false;
+    return;
+  }
+  $("quota-key-input").value = ""; // não deixa a chave visível na tela
+  $("quota-key-error").hidden = true;
+  $("quota-dialog").close();
+  await generate();
+}
+
+function showTranscriptOption() {
+  $("quota-key-steps").hidden = true;
+  $("quota-transcript-info").hidden = false;
+}
+
+async function downloadTranscript() {
+  try {
+    await download(`/api/export/transcript?start=${start}&end=${end}&fmt=txt`);
+  } catch {
+    showMessage("Não foi possível baixar a transcrição.", "error");
+  }
+}
+
+function initQuotaDialog() {
+  $("quota-own-key").addEventListener("click", showOwnKeySteps);
+  $("quota-transcript").addEventListener("click", showTranscriptOption);
+  $("quota-key-form").addEventListener("submit", saveKeyAndGenerate);
+  $("quota-download-txt").addEventListener("click", downloadTranscript);
+  $("quota-close").addEventListener("click", () => $("quota-dialog").close());
 }
 
 /** Salva todos os dias da tela. Devolve true se deu certo. */
@@ -156,6 +220,7 @@ async function init() {
     return;
   }
 
+  initQuotaDialog();
   $("btn-generate").addEventListener("click", generate);
   $("btn-save").addEventListener("click", save);
   $("btn-word").addEventListener("click", downloadWord);

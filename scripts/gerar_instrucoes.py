@@ -219,6 +219,32 @@ SECTIONS = [
         ],
     ),
     (
+        "Limite diário e chave própria",
+        [
+            (
+                "p",
+                "Na versão online, cada pessoa tem um número de diários gerados por dia "
+                "(o contador aparece ao lado dos botões de IA). Quando acabar, você escolhe:",
+            ),
+            (
+                "ul",
+                [
+                    "**Usar minha própria chave:** crie uma chave grátis no Google AI Studio "
+                    "(aistudio.google.com, botão **Get API key**) e cole no app. Com ela não há "
+                    "limite. A chave fica só no seu navegador e aparece mascarada; dá para "
+                    "remover em **Ajustes**.",
+                    "**Continuar só com transcrição:** siga gravando normalmente e baixe o .txt "
+                    "para colar em qualquer IA.",
+                ],
+            ),
+            (
+                "tip",
+                "No plano gratuito do Google AI Studio, o Google pode usar o conteúdo enviado "
+                "para melhorar os produtos dele.",
+            ),
+        ],
+    ),
+    (
         "Privacidade",
         [
             (

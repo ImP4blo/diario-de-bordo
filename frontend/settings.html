@@ -44,6 +44,31 @@
       </form>
     </main>
 
+    <section class="layout layout--tight" aria-labelledby="own-key-title">
+      <div class="panel">
+        <h2 id="own-key-title" class="settings__title">Sua chave de IA (opcional)</h2>
+        <p class="hint">
+          O app tem um limite diário de diários gerados. Com a sua própria chave grátis do Google AI
+          Studio, você gera sem limite.
+        </p>
+
+        <div id="own-key-saved" class="own-key" hidden>
+          <span>Chave salva neste navegador: <code id="own-key-masked"></code></span>
+          <button id="own-key-remove" class="btn btn--small btn--danger" type="button">Remover</button>
+        </div>
+
+        <div id="own-key-new">
+          <ol id="own-key-steps" class="install-steps"></ol>
+          <form id="own-key-form" class="note-form">
+            <input id="own-key-input" class="note-form__input" type="password" placeholder="Cole aqui a chave (AIza...)" autocomplete="off" aria-label="Sua chave do Google AI Studio" />
+            <button class="btn btn--primary" type="submit">Salvar chave</button>
+          </form>
+        </div>
+        <p id="own-key-message" class="message" hidden></p>
+        <p id="own-key-privacy" class="hint"></p>
+      </div>
+    </section>
+
     <template id="block-template">
       <li class="block">
         <input class="block__start" type="time" aria-label="Início do bloco" required />

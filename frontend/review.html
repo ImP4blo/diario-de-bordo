@@ -35,6 +35,37 @@
       <div id="days" class="review-days"></div>
     </main>
 
+    <dialog id="quota-dialog" class="dialog dialog--wide" aria-labelledby="quota-title">
+      <h2 id="quota-title" class="dialog__title">Você usou seus refinamentos de hoje.</h2>
+      <p id="quota-message" class="dialog__question"></p>
+      <div class="quota-options">
+        <button id="quota-own-key" class="btn btn--primary" type="button">🔑 Usar minha própria chave</button>
+        <button id="quota-transcript" class="btn" type="button">📝 Continuar só com transcrição</button>
+      </div>
+
+      <div id="quota-key-steps" class="quota-steps" hidden>
+        <p class="hint">É grátis e leva uns 2 minutos:</p>
+        <ol id="quota-steps-list" class="install-steps"></ol>
+        <form id="quota-key-form" class="note-form">
+          <input id="quota-key-input" class="note-form__input" type="password" placeholder="Cole aqui a chave (AIza...)" autocomplete="off" aria-label="Sua chave do Google AI Studio" />
+          <button class="btn btn--primary" type="submit">Salvar e gerar</button>
+        </form>
+        <p id="quota-key-error" class="message" data-kind="error" hidden></p>
+        <p id="quota-privacy" class="hint"></p>
+      </div>
+
+      <div id="quota-transcript-info" class="quota-steps" hidden>
+        <p>
+          Sem problema! Você continua gravando normalmente. Baixe a transcrição e cole em qualquer IA
+          (o arquivo já vem com o pedido pronto) ou volte amanhã para gerar aqui.
+        </p>
+        <div class="dialog__actions">
+          <button id="quota-download-txt" class="btn btn--primary" type="button">⬇ Baixar transcrição (.txt)</button>
+          <button id="quota-close" class="btn btn--ghost" type="button">Fechar</button>
+        </div>
+      </div>
+    </dialog>
+
     <template id="day-template">
       <section class="panel review-day">
         <header class="review-day__header">
