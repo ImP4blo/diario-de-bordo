@@ -70,6 +70,21 @@
       </div>
     </section>
 
+    <section id="danger-zone" class="layout layout--tight" aria-labelledby="danger-title" hidden>
+      <div class="panel danger-zone">
+        <h2 id="danger-title" class="settings__title">Apagar minha conta</h2>
+        <p class="hint">
+          Apaga para sempre todas as suas falas, anotações, rotina e diários, e a sua conta de
+          login. <strong>Não tem como desfazer.</strong> Se quiser guardar algo, exporte antes.
+        </p>
+        <form id="delete-form" class="note-form">
+          <input id="delete-confirm" class="note-form__input" placeholder='Digite APAGAR para confirmar' autocomplete="off" aria-label="Digite APAGAR para confirmar" />
+          <button id="delete-button" class="btn btn--danger" type="submit" disabled>Apagar tudo</button>
+        </form>
+        <p id="delete-message" class="message" hidden></p>
+      </div>
+    </section>
+
     <template id="block-template">
       <li class="block">
         <input class="block__start" type="time" aria-label="Início do bloco" required />

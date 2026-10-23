@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     supabase_publishable_key: str = ""
     # Só para projetos antigos do Supabase, que assinam tokens com segredo (HS256)
     supabase_jwt_secret: SecretStr | None = None
+    # Chave ADMINISTRATIVA do Supabase (segredo!): usada só para apagar contas de login
+    # no "Apagar minha conta". Nunca vai para o navegador.
+    supabase_service_role_key: SecretStr | None = None
 
     # CORS: quais sites podem chamar a API pelo navegador. Online, o site e a API
     # ficam em endereços diferentes; sem isso, o navegador bloqueia as chamadas.
