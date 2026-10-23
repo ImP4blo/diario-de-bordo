@@ -93,13 +93,55 @@ function readDay(section) {
 
 // --- Ações --------------------------------------------------------------------
 
+// --- Barra de progresso (estimada) ---------------------------------------------
+// O servidor só responde no fim, então não existe porcentagem "real". A barra anda
+// rápido no começo, desacelera perto de 95% e só completa quando a resposta chega.
+// O cronômetro e o brilho animado mostram que não travou.
+
+const SECONDS_PER_DAY = 10; // tempo típico de um dia com a IA
+
+function workdaysInPeriod() {
+  let count = 0;
+  for (let d = new Date(`${start}T12:00:00Z`); d <= new Date(`${end}T12:00:00Z`); ) {
+    if (d.getUTCDay() % 6 !== 0) count++; // 0 = domingo, 6 = sábado
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return Math.max(count, 1);
+}
+
+function startProgress() {
+  const expected = workdaysInPeriod() * SECONDS_PER_DAY;
+  const began = Date.now();
+  const update = (percent, seconds) => {
+    $("progress-fill").style.width = `${percent}%`;
+    $("progress").setAttribute("aria-valuenow", String(percent));
+    $("progress-label").textContent = `${percent}% · ${seconds}s`;
+  };
+  $("progress").hidden = false;
+  update(0, 0);
+
+  const timer = setInterval(() => {
+    const seconds = (Date.now() - began) / 1000;
+    // Curva que se aproxima de 95% sem nunca chegar: no tempo esperado, ~85%
+    const percent = Math.round(95 * (1 - Math.exp((-2 * seconds) / expected)));
+    update(percent, Math.floor(seconds));
+  }, 250);
+
+  return function finish() {
+    clearInterval(timer);
+    update(100, Math.floor((Date.now() - began) / 1000));
+    setTimeout(() => ($("progress").hidden = true), 700);
+  };
+}
+
 async function generate() {
   const hasReviewed = document.querySelector('[data-status="reviewed"]');
   if ((dirty || hasReviewed) && !confirm("Gerar de novo substitui as suas edições. Continuar?")) {
     return;
   }
   $("btn-generate").disabled = true;
-  showMessage("🤖 Gerando com IA... pode levar até 1 minuto por dia.");
+  showMessage("🤖 Gerando com IA... a barra completa quando a resposta chegar.");
+  const finishProgress = startProgress();
   try {
     const days = await api.generateDiary(start, end);
     render(days);
@@ -115,6 +157,7 @@ async function generate() {
     }
     showMessage(err.messages?.join(" · ") ?? "Não foi possível gerar o diário.", "error");
   } finally {
+    finishProgress();
     $("btn-generate").disabled = false;
   }
 }

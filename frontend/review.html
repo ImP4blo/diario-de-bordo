@@ -29,6 +29,10 @@
         <p class="hint">
           Confira e ajuste cada bloco antes de baixar. A IA pode errar: o diário final é seu.
         </p>
+        <div id="progress" class="progress" role="progressbar" aria-label="Gerando o diário" aria-valuemin="0" aria-valuemax="100" hidden>
+          <div class="progress__track"><span id="progress-fill" class="progress__fill"></span></div>
+          <span id="progress-label" class="progress__label"></span>
+        </div>
         <p id="message" class="message" hidden></p>
       </section>
 
