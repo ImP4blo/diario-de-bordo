@@ -21,3 +21,6 @@ __pycache__/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Configurações locais do Claude Code (permissões desta máquina)
+.claude/settings.local.json
