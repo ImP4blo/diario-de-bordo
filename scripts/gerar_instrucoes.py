@@ -37,16 +37,59 @@ SECTIONS = [
         ],
     ),
     (
-        "Antes de começar",
+        "Como acessar e entrar",
+        [
+            (
+                "ol",
+                [
+                    "Abra **diario-de-bordo-yx50.onrender.com** no **Google Chrome**.",
+                    'Se aparecer **"Acordando o servidor..."**, aguarde: no plano gratuito o '
+                    "app dorme quando ninguém usa e leva até 1 minuto para acordar.",
+                    "Clique em **Entrar com Google** ou receba um **link de acesso** no seu "
+                    "e-mail. Cada conta vê só o próprio diário.",
+                    "Na primeira gravação, o Chrome pede acesso ao microfone: clique em "
+                    "**Permitir**.",
+                ],
+            ),
+            ("p", "Para sair da conta, use o botão **Sair**, no canto de cima da tela."),
+        ],
+    ),
+    (
+        "Onde a transcrição por voz funciona",
         [
             (
                 "ul",
                 [
-                    "Use o **Google Chrome** no computador: o reconhecimento de voz só "
-                    "funciona nele.",
-                    "Com o servidor rodando, abra **http://localhost:8000**.",
-                    "Na primeira vez, o Chrome pede acesso ao microfone: clique em **Permitir**.",
+                    "**Melhor:** Google Chrome no computador, com a aba aberta.",
+                    "**Android:** funciona no Chrome com o app aberto na tela.",
+                    "**iPhone:** instável. Pode pedir um toque para voltar a gravar.",
+                    "**Firefox:** não tem reconhecimento de voz. Use o Chrome.",
                 ],
+            ),
+            (
+                "tip",
+                "O reconhecimento é do próprio Chrome: o áudio vai para os servidores do "
+                "Google, que devolvem o texto. O app guarda só o texto, nunca o áudio.",
+            ),
+        ],
+    ),
+    (
+        "Instalar como app (celular ou PC)",
+        [
+            (
+                "ul",
+                [
+                    '**Android:** toque em **Android** em "Baixar app" e confirme '
+                    "**Instalar**. Se não aparecer, use o menu do Chrome > **Instalar app**.",
+                    "**iPhone:** no Safari, toque em **Compartilhar** > **Adicionar à Tela de "
+                    "Início** (o botão **iPhone** mostra o passo a passo).",
+                    "O ícone aparece junto com os seus apps e abre em tela cheia.",
+                ],
+            ),
+            (
+                "tip",
+                "No celular, a gravação para quando a tela apaga ou você abre outro app. Para "
+                "gravar o expediente inteiro, use o computador.",
             ),
         ],
     ),
@@ -127,7 +170,7 @@ SECTIONS = [
         [
             (
                 "p",
-                "Se você passar **15 minutos** (configurável) gravando sem nenhum registro, o app "
+                "Se você passar **15 minutos** gravando sem nenhum registro, o app "
                 'pergunta: "Você ainda está em: **sua atividade**?"',
             ),
             (
@@ -141,7 +184,11 @@ SECTIONS = [
                     "Chrome minimizado, com os botões Sim e Não na própria notificação.",
                 ],
             ),
-            ("tip", "Para mudar o tempo, use INACTIVITY_MINUTES no arquivo .env (1 a 240)."),
+            (
+                "tip",
+                "Pense no alerta como um lembrete amigo: responder leva um clique e deixa o "
+                "diário bem mais preciso.",
+            ),
         ],
     ),
     (
@@ -212,9 +259,8 @@ SECTIONS = [
             ),
             (
                 "tip",
-                "Configure a IA no .env: LLM_PROVIDER=groq (gratuito) com GROQ_API_KEY, ou "
-                "LLM_PROVIDER=anthropic com ANTHROPIC_API_KEY. A chave nunca vai para o "
-                "navegador nem para o Git.",
+                "Enquanto a IA trabalha, uma barra mostra o progresso e o tempo. Um dia leva "
+                "uns 10 segundos; a semana, um pouco mais. A IA pode errar: revise sempre.",
             ),
         ],
     ),
@@ -250,12 +296,14 @@ SECTIONS = [
             (
                 "ul",
                 [
-                    "O reconhecimento de voz do Chrome envia o áudio para servidores do Google.",
-                    "Ao gerar o diário, a transcrição é enviada ao provedor de IA escolhido "
-                    "(Groq ou Anthropic).",
-                    "A transcrição fica salva só no seu computador (pasta data/).",
+                    "O reconhecimento de voz do Chrome envia o áudio para servidores do Google. "
+                    "O app guarda só o texto.",
+                    "As falas e os diários ficam salvos na sua conta, num banco de dados na "
+                    "nuvem (Supabase). Ninguém além de você tem acesso a eles pelo app.",
+                    "Ao gerar o diário, a transcrição do dia é enviada à IA (Groq, ou o Gemini, "
+                    "se você usar a sua chave).",
                     "Antes de usar no trabalho, confirme se as políticas da empresa permitem.",
-                    "Quer salvar só as anotações? Use **SAVE_MODE=notes_only** no arquivo .env.",
+                    "Detalhes completos: **Política de Privacidade**, no rodapé do app.",
                 ],
             ),
         ],
@@ -266,11 +314,16 @@ SECTIONS = [
             (
                 "ul",
                 [
-                    '**"Servidor fora do ar":** abra o terminal na pasta do projeto e rode o '
-                    "servidor (veja o README).",
+                    '**"Acordando o servidor" demorou mais de 2 minutos:** recarregue a página. '
+                    "Se continuar, o serviço pode estar instável; tente mais tarde.",
+                    "**Falou e não apareceu nada:** confira se está no Chrome, se o indicador "
+                    "está **verde** e se o microfone do computador não está mudo.",
                     '**"Microfone bloqueado":** clique no cadeado ao lado do endereço e '
                     "permita o microfone.",
-                    "**Falas picadas ou juntas demais:** ajuste **PHRASE_GAP_SECONDS** no .env.",
+                    "**Voltou para a tela de login:** a sessão expirou. Entre de novo; as falas "
+                    "que estavam pendentes são enviadas em seguida.",
+                    '**"Você usou seus refinamentos de hoje":** use a sua chave do Google AI '
+                    "Studio ou baixe a transcrição e volte amanhã.",
                 ],
             ),
         ],
@@ -313,6 +366,10 @@ class InstructionsPDF(FPDF):
         self.cell(0, height, text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     def section(self, number: int, title: str) -> None:
+        # Sem espaço para o título e algumas linhas? Começa na próxima página,
+        # para o título não ficar sozinho no pé da página ("título órfão")
+        if self.get_y() > self.h - 60:
+            self.add_page()
         self.ln(3)
         self.set_font("Helvetica", "B", 13)
         self.set_text_color(*ACCENT)
